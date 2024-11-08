@@ -4,3 +4,4 @@ var Command = {
 	return true
 	}
 }
+module.exports = Command
