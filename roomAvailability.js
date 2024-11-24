@@ -1,54 +1,110 @@
+//SPEC4
+const fs = require('fs');
 const readline = require('readline');
 
-// Simulated room schedule data
-const rooms = {
-    RoomA: [{ start: "08:00", end: "10:00" }, { start: "14:00", end: "16:00" }],
-    RoomB: [{ start: "09:00", end: "11:00" }],
-    RoomC: [{ start: "12:00", end: "14:00" }]
-};
-
-// Check if a room is available within a specific time range
-function isRoomAvailable(roomSchedule, userStart, userEnd) {
-    return roomSchedule.every(schedule =>
-        userEnd <= schedule.start || userStart >= schedule.end // User time range does not overlap with room schedule
-    );
-}
-
-// Find available rooms within a specific time range
-function findAvailableRooms(userStart, userEnd) {
-    const availableRooms = [];
-    for (const [room, schedule] of Object.entries(rooms)) {
-        if (isRoomAvailable(schedule, userStart, userEnd)) {
-            availableRooms.push(room);
-        }
+// Exam Simulator Class
+class ExamSimulator {
+    constructor(questions) {
+        this.questions = questions; // The question bank
+        this.currentIndex = 0; // Current question index
+        this.answers = []; // Array to store student answers
     }
-    return availableRooms;
-}
 
-// Create user input interface
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
-
-// Main function
-async function checkRoomAvailability() {
-    console.log("=== Check room availability for a specific time period ===");
-    rl.question("Enter the start time of the time period (HH:MM): ", (userStart) => {
-        rl.question("Enter the end time of the time period (HH:MM): ", (userEnd) => {
-            const availableRooms = findAvailableRooms(userStart, userEnd);
-            if (availableRooms.length > 0) {
-                console.log(`Rooms available from ${userStart} to ${userEnd}:`, availableRooms.join(", "));
-            } else {
-                console.log(`No rooms are available from ${userStart} to ${userEnd}.`);
-            }
-            rl.close();
+    // Display the current question
+    displayQuestion() {
+        const question = this.questions[this.currentIndex];
+        console.log(`\nQuestion ${this.currentIndex + 1}: ${question.text}`);
+        question.options.forEach((option, index) => {
+            console.log(`  ${index + 1}. ${option}`);
         });
-    });
+    }
+
+    // Accept the student's answer
+    async acceptAnswer(rl) {
+        return new Promise((resolve) => {
+            rl.question("Your answer (enter the option number): ", (input) => {
+                const answer = parseInt(input.trim(), 10);
+                if (answer >= 1 && answer <= this.questions[this.currentIndex].options.length) {
+                    this.answers.push({
+                        questionIndex: this.currentIndex,
+                        selectedOption: answer - 1,
+                    });
+                    resolve();
+                } else {
+                    console.log("Invalid input. Please try again.");
+                    resolve(this.acceptAnswer(rl));
+                }
+            });
+        });
+    }
+
+    // Generate the exam report
+    generateReport() {
+        console.log("\n=== Exam Report ===");
+        let correctCount = 0;
+
+        this.questions.forEach((question, index) => {
+            const studentAnswer = this.answers.find((ans) => ans.questionIndex === index);
+            const isCorrect = studentAnswer?.selectedOption === question.correctIndex;
+
+            console.log(`\nQuestion ${index + 1}: ${question.text}`);
+            console.log(`  Your Answer: ${question.options[studentAnswer?.selectedOption] || "No answer"}`);
+            console.log(`  Correct Answer: ${question.options[question.correctIndex]}`);
+            console.log(`  Result: ${isCorrect ? "Correct" : "Incorrect"}`);
+
+            if (isCorrect) correctCount++;
+        });
+
+        console.log(`\nYour Score: ${correctCount} / ${this.questions.length}`);
+    }
+
+    // Start the exam
+    async startExam() {
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+        });
+
+        console.log("=== Exam Started ===");
+        while (this.currentIndex < this.questions.length) {
+            this.displayQuestion();
+            await this.acceptAnswer(rl);
+            this.currentIndex++;
+        }
+
+        rl.close();
+        this.generateReport();
+    }
 }
 
-// Export the function for CLI usage
-module.exports = checkRoomAvailability;
+// Function to parse GIFT data
+function parseGiftData(giftData) {
+    const questions = [];
+    const rawQuestions = giftData.split(/\n\n+/); // Split questions by double newlines
+    rawQuestions.forEach((rawQuestion) => {
+        const match = rawQuestion.match(/^(.*?)\{(.*?)\}$/s); // Match question and answers
+        if (match) {
+            const text = match[1].trim();
+            const options = match[2]
+                .split("~")
+                .map((opt) => opt.replace(/^[=]/, "").trim()); // Remove '=' from correct answers
+            const correctIndex = match[2].split("~").findIndex((opt) => opt.startsWith("="));
+            questions.push({ text, options, correctIndex });
+        }
+    });
+    return questions;
+}
 
-// Example invocation
-// checkRoomAvailability();
+// Example GIFT data
+const giftData = `
+What is the capital of France? {=Paris~London~Berlin~Madrid}
+2 + 2 equals? {=4~3~5~6}
+Who wrote "Hamlet"? {=Shakespeare~Dickens~Hemingway~Orwell}
+`;
+
+// Initialize the exam simulator
+const questions = parseGiftData(giftData);
+const simulator = new ExamSimulator(questions);
+
+// Start the exam
+simulator.startExam();
