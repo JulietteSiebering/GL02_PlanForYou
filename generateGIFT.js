@@ -68,14 +68,30 @@ module.exports = async function generateGiftExam() {
             console.log(`${index + 1}. ${type}`);
         });
 
-        const fileTypeIndex = await askQuestion(rl, "\nEntrez les numéros des catégories à inclure (séparés par des espaces, ou appuyez sur Entrée pour annuler) : ");
-        if (fileTypeIndex === "") {
-            console.log("Aucune catégorie sélectionnée. Opération annulée.");
-            return false;
+        let fileTypeIndex;
+        let indexes;
+        let invalidIndexes;
+    
+        // On demande à l'utilisateur de saisir tant que la saisie est invalide
+        while (true) {
+            fileTypeIndex = await askQuestion(rl, "\nEntrez les numéros des catégories à inclure (séparés par des espaces, ou appuyez sur Entrée pour annuler) : ");
+    
+            if (fileTypeIndex === "") {
+                console.log("Aucune catégorie sélectionnée. Opération annulée.");
+                return false;
+            }
+    
+            // On vérifie si l'entrée est valide
+            indexes = fileTypeIndex.split(' ').map(index => parseInt(index.trim(), 10) - 1);
+            invalidIndexes = indexes.filter(index => isNaN(index) || !fileKeys[index]);
+    
+            if (invalidIndexes.length === 0) {
+                // Si tous les indices sont valides, on sort de la boucle
+                break;
+            } else {
+                console.log("Saisie invalide. Assurez-vous de saisir des numéros valides parmi les types de questions.");
+            }
         }
-
-        const indexes = fileTypeIndex.split(' ').map(index => parseInt(index.trim(), 10) - 1);
-        const invalidIndexes = indexes.filter(index => isNaN(index) || !fileKeys[index]);
 
         if (invalidIndexes.length > 0) {
             console.log("Certains numéros sont invalides. Veuillez réessayer.");
@@ -150,76 +166,73 @@ module.exports = async function generateGiftExam() {
         return;
     }
 
+
     await selectQuestions();
+
+
+    /*
+    A TESTER LE FAIRE TANT QUE LA CONDITION N'EST PAS ACCEPTEE : soit non, soit nombre questions OK
+    */
 
     // Vérification du nombre de questions sélectionnées
     const checkQuestionsCount = async () => {
-        if (selectedQuestions.length < 15) {
-            const addQuestions = await askQuestion(rl, `Vous avez sélectionné ${selectedQuestions.length} question(s). L'examen doit en contenir au moins 15. Souhaitez-vous ajouter des questions ? (oui/non) : `);
-            if (addQuestions.toLowerCase().startsWith('o')) {
-                console.log("Recommençons la sélection avec les questions déjà sélectionnées.");
-                const filtersApplied = await applyFilters();
-                if (!filtersApplied) {
-                    rl.close();
-                    return;
-                }
-                await selectQuestions(); // Relance le processus de sélection de questions
-            } else {
-                console.log("Opération annulée. L'examen ne sera pas créé.");
-                rl.close();
-                return;
-            }
-        } else if (selectedQuestions.length > 20) {
-            const deselectQuestions = await askQuestion(rl, `Vous avez sélectionné ${selectedQuestions.length} question(s), mais l'examen ne doit en comporter que 20 au maximum. Souhaitez-vous désélectionner certaines questions ? (oui/non) : `);
-            if (deselectQuestions.toLowerCase().startsWith('o')) {
-                console.log("Voici les questions sélectionnées :");
-                selectedQuestions.forEach((q, index) => {
-                    const parsed = parseQuestion(q);
-                    console.log(`${index + 1}. ${parsed.title}`);
-                });
-
-                let deselectSelection;
-                do {
-                    deselectSelection = await askQuestion(rl, "Entrez le numéro d'une question à désélectionner (ou appuyez sur Entrée pour terminer) : ");
-                    if (deselectSelection && !isNaN(deselectSelection) && selectedQuestions[deselectSelection - 1]) {
-                        const deselectedQuestion = selectedQuestions[deselectSelection - 1];
-                        selectedQuestions = selectedQuestions.filter(q => q !== deselectedQuestion); // Désélectionne la question
-                        console.log("Question désélectionnée.");
+        while (selectedQuestions.length < 15 || selectedQuestions.length > 20) {
+            if (selectedQuestions.length < 15) {
+                const addQuestions = await askQuestion(rl, `Vous avez sélectionné ${selectedQuestions.length} question(s). L'examen doit en contenir au moins 15. Souhaitez-vous ajouter des questions ? (oui/non) : `);
+                if (addQuestions.toLowerCase().startsWith('o')) {
+                    console.log("Recommençons la sélection avec les questions déjà sélectionnées.");
+                    const filtersApplied = await applyFilters();
+                    if (!filtersApplied) {
+                        console.log("Opération annulée. L'examen ne sera pas créé.");
+                        rl.close();
+                        return false;
                     }
-                } while (deselectSelection); // Tant que l'utilisateur n'appuie pas sur Entrée
-            } else {
-                console.log("Opération annulée. L'examen ne sera pas créé.");
-                rl.close();
-                return;
-            }
-        }
-
-        // Si après la désélection, le nombre de questions est toujours inférieur à 15
-        if (selectedQuestions.length < 15) {
-            const addQuestions = await askQuestion(rl, `Il vous reste ${selectedQuestions.length} question(s), voulez-vous en ajouter plus ? (oui/non) : `);
-            if (addQuestions.toLowerCase().startsWith('o')) {
-                const filtersApplied = await applyFilters();
-                if (!filtersApplied) {
+                    await selectQuestions();
+                } else {
+                    console.log("Opération annulée. L'examen ne sera pas créé.");
                     rl.close();
-                    return;
+                    return false;
                 }
-                await selectQuestions(); // Relance le processus de sélection de questions
-            } else {
-                console.log("Opération annulée. L'examen ne sera pas créé.");
+            } else if (selectedQuestions.length > 20) {
+                const deselectQuestions = await askQuestion(rl, `Vous avez sélectionné ${selectedQuestions.length} question(s), mais l'examen ne doit en comporter que 20 au maximum. Souhaitez-vous désélectionner certaines questions ? (oui/non) : `);
+                if (deselectQuestions.toLowerCase().startsWith('o')) {
+                    console.log("Voici les questions sélectionnées :");
+                    selectedQuestions.forEach((q, index) => {
+                        const parsed = parseQuestion(q);
+                        console.log(`${index + 1}. ${parsed.title}`);
+                    });
+    
+                    let deselectSelection;
+                    do {
+                        deselectSelection = await askQuestion(rl, "Entrez le numéro d'une question à désélectionner (ou appuyez sur Entrée pour terminer) : ");
+                        if (deselectSelection && !isNaN(deselectSelection) && selectedQuestions[deselectSelection - 1]) {
+                            const deselectedQuestion = selectedQuestions[deselectSelection - 1];
+                            selectedQuestions = selectedQuestions.filter(q => q !== deselectedQuestion); // Désélectionne la question
+                            console.log("Question désélectionnée.");
+                        }
+                    } while (deselectSelection); // Tant que l'utilisateur n'appuie pas sur Entrée
+                } else {
+                    console.log("Opération annulée. L'examen ne sera pas créé.");
+                    rl.close();
+                    return false;
+                }
             }
         }
+        return true;
     };
 
+    
     await checkQuestionsCount();
+
+    
+    
 
     if (selectedQuestions.length === 0) {
         console.log("Aucune question sélectionnée. Opération annulée.");
         rl.close();
         return;
     }
-
-    // Vérification du nombre de questions (toujours entre 15 et 20)
-    if (selectedQuestions.length < 15 || selectedQuestions.length > 20) {
+    else if (selectedQuestions.length < 15 || selectedQuestions.length > 20) {
         console.log("L'examen doit comporter entre 15 et 20 questions. Opération annulée.");
         rl.close();
         return;
