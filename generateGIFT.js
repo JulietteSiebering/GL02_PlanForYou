@@ -41,6 +41,12 @@ function askQuestion(rl, query) {
     return new Promise(resolve => rl.question(query, resolve));
 }
 
+
+function removeHtmlTags(text) {
+    return text.replace(/<[^>]*>/g, '')  // Retirer les balises HTML
+               .replace(/\[html\]/g, ''); // Retirer le texte [html]
+}
+
 // Fonction principale exportable
 module.exports = async function generateGiftExam() {
     const rl = createReadlineInterface();
@@ -114,13 +120,14 @@ module.exports = async function generateGiftExam() {
         console.log(`\nQuestions disponibles (${questions.length}) :`);
         questions.forEach((q, i) => {
             const parsed = parseQuestion(q);
-            console.log(`\n${i + 1}. Question: ${parsed.title}`);
-            console.log(`   Réponse(s):`);
-            console.log(parsed.response);
+            console.log(`\n${i + 1}. Question: ${removeHtmlTags(parsed.title)}`);
+            console.log(removeHtmlTags(parsed.response));
         });
 
         return true;
     };
+
+
 
     // Fonction pour afficher et sélectionner les questions
     const selectQuestions = async () => {
@@ -221,7 +228,7 @@ module.exports = async function generateGiftExam() {
         return true;
     };
 
-    
+
     await checkQuestionsCount();
 
     
