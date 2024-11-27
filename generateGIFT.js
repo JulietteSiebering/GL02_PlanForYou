@@ -82,9 +82,16 @@ module.exports = async function generateGiftExam() {
         while (true) {
             fileTypeIndex = await askQuestion(rl, "\nEntrez les numéros des catégories à inclure (séparés par des espaces, ou appuyez sur Entrée pour annuler) : ");
     
-            if (fileTypeIndex === "") {
-                console.log("Aucune catégorie sélectionnée. Opération annulée.");
-                return false;
+            while (fileTypeIndex === "") {
+                const confirmExit = await askQuestion(rl, "Aucune catégorie sélectionnée. Êtes-vous sûr de vouloir quitter ? (oui/non) : ");
+                if (confirmExit.toLowerCase().startsWith('o')) {
+                    console.log("Opération annulée. L'examen ne sera pas créé.");
+                    rl.close();
+                    return false;
+                } else {
+                    console.log("Retour au menu de sélection des catégories.");
+                    fileTypeIndex = await askQuestion(rl, "\nEntrez les numéros des catégories à inclure (séparés par des espaces, ou appuyez sur Entrée pour annuler) : ");
+                }
             }
     
             // On vérifie si l'entrée est valide
