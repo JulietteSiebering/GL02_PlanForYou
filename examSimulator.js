@@ -1,3 +1,4 @@
+//SPEC4
 const fs = require('fs');
 const readline = require('readline');
 const { loadQuestions, parseGiftData } = require('./generateGIFT'); // Import existing functions
