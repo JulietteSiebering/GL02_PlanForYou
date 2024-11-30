@@ -1,18 +1,17 @@
 /*
-SPEC 3 : Génération de fichier VCards : Terminée et fonctionnelle
+SPEC 3 : Génération de fichier VCards 
 */
 
+const readline = require('readline');
+const vCardsJS = require('vcards-js');
+const { validateEmail, validatePhone } = require('./vCardsValidation'); 
+
 module.exports = function vCardsGeneration() {
-    const readline = require('readline');
-    const vCardsJS = require('vcards-js');
 
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
     });
-
-    const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    const validatePhone = (phone) => /^\+?[0-9\s\-]{7,15}$/.test(phone);
 
     const askQuestion = (question) => new Promise((resolve) => rl.question(question, resolve));
 
@@ -74,5 +73,7 @@ module.exports = function vCardsGeneration() {
         }
     };
 
-    start();
+start();
+
 };
+

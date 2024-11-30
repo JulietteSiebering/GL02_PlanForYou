@@ -12,9 +12,12 @@
   "description": "",
   "main": "vCardsGeneration.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jasmine"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "jasmine": "^5.4.0"
+  }
 }
