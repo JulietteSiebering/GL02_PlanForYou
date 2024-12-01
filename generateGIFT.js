@@ -20,14 +20,38 @@ function loadQuestions(filePaths) {
 
 // Fonction pour extraire la question et les réponses
 function parseQuestion(question) {
-    const lines = question.split('\n');
-    const title = lines[0]; // Titre ou description de la question
-    const response = lines.slice(1).join('\n'); // Réponses ou contenu suivant
+    function removeCommentLines(input) {
+        const lines = input.split('\n');
+        const filteredLines = lines.filter(line => !line.trim().startsWith('//'));
+        return filteredLines.join('\n');
+    }
+
+    question = removeCommentLines(question);
+
+    const titleRegex = /^::(.*?)::/;  
+    const match = question.match(titleRegex);
+
+    if (!match) {
+        return {
+            title: '',
+            response: question.trim()
+        };
+    }
+
+    const title = match[1].trim();
+
+    const response = question.replace(titleRegex, '').trim();  
+
+    const cleanedTitle = removeHtmlTags(title);
+    const cleanedResponse = removeHtmlTags(response);
+
     return {
-        title: title.replace(/::/g, '').trim(), // Supprime les "::" autour du titre
-        response: response.trim()
+        title: cleanedTitle.trim() + ' ', 
+        response: cleanedResponse
     };
 }
+
+
 
 // Interface pour les entrées utilisateur
 function createReadlineInterface() {
@@ -48,7 +72,7 @@ function removeHtmlTags(text) {
 }
 
 // Fonction principale exportable
-module.exports = async function generateGiftExam() {
+async function generateGiftExam() {
     const rl = createReadlineInterface();
     console.log("=== Génération de fichiers d'examen GIFT ===");
 
@@ -183,11 +207,6 @@ module.exports = async function generateGiftExam() {
 
     await selectQuestions();
 
-
-    /*
-    A TESTER LE FAIRE TANT QUE LA CONDITION N'EST PAS ACCEPTEE : soit non, soit nombre questions OK
-    */
-
     // Vérification du nombre de questions sélectionnées
     const checkQuestionsCount = async () => {
         while (selectedQuestions.length < 15 || selectedQuestions.length > 20) {
@@ -272,7 +291,7 @@ module.exports = async function generateGiftExam() {
     rl.close();
 };
 
-
+module.exports = { removeHtmlTags, parseQuestion, loadQuestions, generateGiftExam };
    
  
 

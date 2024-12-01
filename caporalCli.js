@@ -1,23 +1,26 @@
 const fs = require('fs');
-const vCards = require('./vCardsGeneration');
-const generateGIFT = require('./generateGIFT');
+const vCards = require('./vCardsGeneration'); 
+const {generateGiftExam}= require('./generateGIFT'); 
+
 const { startExamSimulator } = require('./examSimulator'); // Import Exam Simulator
 const { GIFTAnalyzer } = require('./GIFTAnalyzer'); // Import GIFTAnalyzer
-const cli = require('@caporal/core').default;
+
+const cli = require("@caporal/core").default;
 
 cli
-    .version('1.0.0')
+	.version('vpf-parser-cli')
+	.version('0.07')
 
-    // SPEC 3 : Generate vCards
-    .command('vCardsGenerate', 'Generate Professor vCards')
-    .action(() => {
-        vCards();
+	// SPEC 3 : Generate Vcards
+	.command('vCardsGenerate', 'Generate Professor vCards')
+	.action(() => {
+		vCards();
     })
 
-    // SPEC 1 and 2 : Generate GIFT Test
+    // SPEC 1 et 2 
     .command('generateGIFT', 'Create Test')
     .action(() => {
-        generateGIFT();
+        generateGiftExam();
     })
 
     // SPEC 4 : Exam Simulator
@@ -70,6 +73,5 @@ cli
         // Generate and save statistics
         analyzer.generateExamStatistics(questions, outputPath);
     });
-
+		
 cli.run(process.argv.slice(2));
-S
