@@ -15,9 +15,14 @@ function createReadlineInterface() {
 function loadQuestions(filePaths) {
     let allQuestions = [];
     filePaths.forEach(filePath => {
-        const content = fs.readFileSync(filePath, 'utf-8');
-        const questions = content.split(/\n\n+/); // Split the content into questions
-        allQuestions = allQuestions.concat(questions.filter(q => q.startsWith('::'))); // Filter valid questions
+        try {
+            const content = fs.readFileSync(filePath, 'utf-8');
+            const questions = content.split(/\n\n+/); // Split the content into questions
+            allQuestions = allQuestions.concat(questions.filter(q => q.startsWith('::'))); // Filter valid questions
+        } catch (error) {
+            console.error(`Error loading file ${filePath}: ${error.message}`);
+            process.exit(1); // Exit the program if the file can't be loaded
+        }
     });
     return allQuestions;
 }
@@ -44,25 +49,45 @@ function parseQuestion(question) {
 }
 
 // Function to ask the user a question
-async function askQuestion(rl, query) {
-    return new Promise(resolve => rl.question(query, resolve));
+async function askQuestion(rl, query, validateFn) {
+    let answer;
+    do {
+        answer = await new Promise(resolve => rl.question(query, resolve));
+        if (validateFn && !validateFn(answer)) {
+            console.log("Invalid answer format. Please try again.");
+        }
+    } while (validateFn && !validateFn(answer));
+    return answer;
+}
+
+// Validate answer (e.g., non-empty)
+function validateAnswer(answer) {
+    return answer.trim() !== '';
 }
 
 // Calculate the correct and incorrect answers
 function calculateResults(questions, answers) {
     let correct = 0;
     let incorrect = 0;
+    let details = [];
 
     questions.forEach((q, index) => {
         const parsed = parseQuestion(q);
-        if (parsed.response.trim().toLowerCase() === answers[index].trim().toLowerCase()) {
+        const isCorrect = parsed.response.trim().toLowerCase() === answers[index].trim().toLowerCase();
+        if (isCorrect) {
             correct++;
         } else {
             incorrect++;
         }
+        details.push({
+            question: parsed.title,
+            correctAnswer: parsed.response,
+            studentAnswer: answers[index],
+            isCorrect: isCorrect
+        });
     });
 
-    return { correct, incorrect };
+    return { correct, incorrect, details };
 }
 
 // Main function to simulate the exam
@@ -80,8 +105,8 @@ async function simulateExam() {
         const parsed = parseQuestion(questions[i]);
         console.log(`Question ${i + 1}: ${parsed.title}`);
         
-        // Get the student's answer
-        let answer = await askQuestion(rl, "Your answer: ");
+        // Get the student's answer with validation
+        let answer = await askQuestion(rl, "Your answer: ", validateAnswer);
         studentAnswers.push(answer);
     }
 
@@ -91,6 +116,16 @@ async function simulateExam() {
     console.log("\n=== Exam Summary ===");
     console.log(`Correct Answers: ${results.correct}`);
     console.log(`Incorrect Answers: ${results.incorrect}`);
+
+    // Display details for each question
+    console.log("\n=== Question Details ===");
+    results.details.forEach((detail, index) => {
+        console.log(`\nQuestion ${index + 1}:`);
+        console.log(`   Question: ${detail.question}`);
+        console.log(`   Correct Answer: ${detail.correctAnswer}`);
+        console.log(`   Your Answer: ${detail.studentAnswer}`);
+        console.log(`   ${detail.isCorrect ? 'Correct' : 'Incorrect'}`);
+    });
 
     rl.close();
 }
