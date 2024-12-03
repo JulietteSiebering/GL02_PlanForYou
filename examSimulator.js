@@ -1,98 +1,101 @@
 //SPEC4
 const fs = require('fs');
+const path = require('path');
 const readline = require('readline');
-const { loadQuestions, parseGiftData } = require('./generateGIFT'); // Import existing functions
 
-// Exam Simulator Class
-class ExamSimulator {
-    constructor(questions) {
-        this.questions = questions; // List of questions
-        this.currentIndex = 0; // Current question index
-        this.answers = []; // Store user answers
+// Create readline interface for user input
+function createReadlineInterface() {
+    return readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+}
+
+// Load questions from multiple GIFT format files
+function loadQuestions(filePaths) {
+    let allQuestions = [];
+    filePaths.forEach(filePath => {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const questions = content.split(/\n\n+/); // Split the content into questions
+        allQuestions = allQuestions.concat(questions.filter(q => q.startsWith('::'))); // Filter valid questions
+    });
+    return allQuestions;
+}
+
+// Parse the question to extract title and response
+function parseQuestion(question) {
+    const titleRegex = /^::(.*?)::/;
+    const match = question.match(titleRegex);
+
+    if (!match) {
+        return {
+            title: '',
+            response: question.trim()
+        };
     }
 
-    // Display the current question
-    displayQuestion() {
-        const question = this.questions[this.currentIndex];
-        console.log(`\nQuestion ${this.currentIndex + 1}: ${question.text}`);
-        question.options.forEach((option, index) => {
-            console.log(`  ${index + 1}. ${option}`);
-        });
-    }
+    const title = match[1].trim();
+    const response = question.replace(titleRegex, '').trim();
 
-    // Accept the user's answer
-    async acceptAnswer(rl) {
-        return new Promise((resolve) => {
-            rl.question("Your answer (enter the option number): ", (input) => {
-                const answer = parseInt(input.trim(), 10);
-                if (answer >= 1 && answer <= this.questions[this.currentIndex].options.length) {
-                    this.answers.push({
-                        questionIndex: this.currentIndex,
-                        selectedOption: answer - 1,
-                    });
-                    resolve();
-                } else {
-                    console.log("Invalid input. Please try again.");
-                    resolve(this.acceptAnswer(rl));
-                }
-            });
-        });
-    }
+    return {
+        title: title,
+        response: response
+    };
+}
 
-    // Generate the exam report
-    generateReport() {
-        console.log("\n=== Exam Report ===");
-        let correctCount = 0;
+// Function to ask the user a question
+async function askQuestion(rl, query) {
+    return new Promise(resolve => rl.question(query, resolve));
+}
 
-        this.questions.forEach((question, index) => {
-            const studentAnswer = this.answers.find((ans) => ans.questionIndex === index);
-            const isCorrect = studentAnswer?.selectedOption === question.correctIndex;
+// Calculate the correct and incorrect answers
+function calculateResults(questions, answers) {
+    let correct = 0;
+    let incorrect = 0;
 
-            console.log(`\nQuestion ${index + 1}: ${question.text}`);
-            console.log(`  Your Answer: ${question.options[studentAnswer?.selectedOption] || "No answer"}`);
-            console.log(`  Correct Answer: ${question.options[question.correctIndex]}`);
-            console.log(`  Result: ${isCorrect ? "Correct" : "Incorrect"}`);
-
-            if (isCorrect) correctCount++;
-        });
-
-        console.log(`\nYour Score: ${correctCount} / ${this.questions.length}`);
-    }
-
-    // Start the exam
-    async startExam() {
-        const rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout,
-        });
-
-        console.log("=== Exam Started ===");
-        while (this.currentIndex < this.questions.length) {
-            this.displayQuestion();
-            await this.acceptAnswer(rl);
-            this.currentIndex++;
+    questions.forEach((q, index) => {
+        const parsed = parseQuestion(q);
+        if (parsed.response.trim().toLowerCase() === answers[index].trim().toLowerCase()) {
+            correct++;
+        } else {
+            incorrect++;
         }
+    });
 
-        rl.close();
-        this.generateReport();
-    }
+    return { correct, incorrect };
 }
 
-// Start the exam simulator
-async function startExamSimulator(filePaths) {
-    console.log("Loading questions...");
-    const rawQuestions = loadQuestions(filePaths); // Load questions from files
-    const parsedQuestions = parseGiftData(rawQuestions.join('\n\n')); // Parse questions
+// Main function to simulate the exam
+async function simulateExam() {
+    const rl = createReadlineInterface();
+    console.log("=== Exam Simulation Started ===");
 
-    if (parsedQuestions.length === 0) {
-        console.log("No questions found. Exiting...");
-        return;
+    // Load questions from GIFT format files
+    const filePaths = ['./examen.gift']; // You can specify multiple file paths here
+    let questions = loadQuestions(filePaths);
+    let studentAnswers = [];
+
+    // Simulate the exam process
+    for (let i = 0; i < questions.length; i++) {
+        const parsed = parseQuestion(questions[i]);
+        console.log(`Question ${i + 1}: ${parsed.title}`);
+        
+        // Get the student's answer
+        let answer = await askQuestion(rl, "Your answer: ");
+        studentAnswers.push(answer);
     }
 
-    console.log(`${parsedQuestions.length} questions loaded.`);
-    const simulator = new ExamSimulator(parsedQuestions); // Initialize the exam simulator
-    await simulator.startExam();
+    // Calculate and display the results
+    const results = calculateResults(questions, studentAnswers);
+
+    console.log("\n=== Exam Summary ===");
+    console.log(`Correct Answers: ${results.correct}`);
+    console.log(`Incorrect Answers: ${results.incorrect}`);
+
+    rl.close();
 }
 
-// Export the function for use in CLI
-module.exports = { startExamSimulator };
+// Start the exam simulation
+simulateExam().catch(err => {
+    console.error("Error:", err);
+});
