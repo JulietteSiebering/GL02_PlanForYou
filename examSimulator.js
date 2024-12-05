@@ -1,9 +1,54 @@
-//SPEC4
-const fs = require('fs');
-const path = require('path');
-const readline = require('readline');
+const readline = require('readline'); // For command-line interaction
+const fs = require('fs'); // File system module for loading GIFT files
+const path = require('path'); // Path module for locating files
 
-// Create readline interface for user input
+/**
+ * Utility function: Load GIFT format question bank
+ * @param {string} folderPath - Folder path where GIFT files are located
+ * @returns {Array} - Array containing all questions
+ */
+function loadQuestions(folderPath) {
+    try {
+        const files = fs.readdirSync(folderPath).filter(file => file.endsWith('.gift'));
+        if (files.length === 0) {
+            throw new Error('Failed to load question bank: No valid .gift files found in the folder');
+        }
+        let allQuestions = [];
+        files.forEach(file => {
+            const filePath = path.join(folderPath, file);
+            const content = fs.readFileSync(filePath, 'utf-8');
+            const questions = content.split(/\n\n+/).filter(q => q.startsWith('::'));
+            allQuestions = allQuestions.concat(questions);
+        });
+        return allQuestions;
+    } catch (error) {
+        console.error("Failed to load question bank folder:", error.message);
+        throw error; // Re-throw the error for testing to catch
+    }
+}
+
+/**
+ * Utility function: Parse GIFT format question
+ * @param {string} question - String of a single GIFT question
+ * @returns {Object} - Object containing the title and the correct answer
+ */
+function parseQuestion(question) {
+    const titleRegex = /^::(.*?)::/;
+    const match = question.match(titleRegex);
+
+    if (!match) {
+        return { title: "Untitled", response: question.trim() };
+    }
+
+    const title = match[1].trim();
+    const response = question.replace(titleRegex, '').trim();
+    return { title, response };
+}
+
+/**
+ * Utility function: Create a command-line interface
+ * @returns {Interface} - readline interface
+ */
 function createReadlineInterface() {
     return readline.createInterface({
         input: process.stdin,
@@ -11,126 +56,82 @@ function createReadlineInterface() {
     });
 }
 
-// Load questions from multiple GIFT format files
-function loadQuestions(filePaths) {
-    let allQuestions = [];
-    filePaths.forEach(filePath => {
-        try {
-            const content = fs.readFileSync(filePath, 'utf-8');
-            const questions = content.split(/\n\n+/); // Split the content into questions
-            allQuestions = allQuestions.concat(questions.filter(q => q.startsWith('::'))); // Filter valid questions
-        } catch (error) {
-            console.error(`Error loading file ${filePath}: ${error.message}`);
-            process.exit(1); // Exit the program if the file can't be loaded
-        }
-    });
-    return allQuestions;
-}
-
-// Parse the question to extract title and response
-function parseQuestion(question) {
-    const titleRegex = /^::(.*?)::/;
-    const match = question.match(titleRegex);
-
-    if (!match) {
-        return {
-            title: '',
-            response: question.trim()
-        };
-    }
-
-    const title = match[1].trim();
-    const response = question.replace(titleRegex, '').trim();
-
-    return {
-        title: title,
-        response: response
-    };
-}
-
-// Function to ask the user a question
-async function askQuestion(rl, query, validateFn) {
-    let answer;
-    do {
-        answer = await new Promise(resolve => rl.question(query, resolve));
-        if (validateFn && !validateFn(answer)) {
-            console.log("Invalid answer format. Please try again.");
-        }
-    } while (validateFn && !validateFn(answer));
-    return answer;
-}
-
-// Validate answer (e.g., non-empty)
-function validateAnswer(answer) {
-    return answer.trim() !== '';
-}
-
-// Calculate the correct and incorrect answers
-function calculateResults(questions, answers) {
-    let correct = 0;
-    let incorrect = 0;
-    let details = [];
-
-    questions.forEach((q, index) => {
-        const parsed = parseQuestion(q);
-        const isCorrect = parsed.response.trim().toLowerCase() === answers[index].trim().toLowerCase();
-        if (isCorrect) {
-            correct++;
-        } else {
-            incorrect++;
-        }
-        details.push({
-            question: parsed.title,
-            correctAnswer: parsed.response,
-            studentAnswer: answers[index],
-            isCorrect: isCorrect
-        });
-    });
-
-    return { correct, incorrect, details };
-}
-
-// Main function to simulate the exam
-async function simulateExam() {
+/**
+ * Main function to simulate the exam
+ * @param {Array} questions - Array of already loaded and parsed questions
+ */
+async function simulateExam(questions) {
     const rl = createReadlineInterface();
-    console.log("=== Exam Simulation Started ===");
+    console.log("=== Exam Simulation Starts ===");
 
-    // Load questions from GIFT format files
-    const filePaths = ['./examen.gift']; // You can specify multiple file paths here
-    let questions = loadQuestions(filePaths);
-    let studentAnswers = [];
+    const studentAnswers = [];
+    let correctCount = 0;
 
-    // Simulate the exam process
     for (let i = 0; i < questions.length; i++) {
-        const parsed = parseQuestion(questions[i]);
-        console.log(`Question ${i + 1}: ${parsed.title}`);
-        
-        // Get the student's answer with validation
-        let answer = await askQuestion(rl, "Your answer: ", validateAnswer);
-        studentAnswers.push(answer);
-    }
+        const parsedQuestion = parseQuestion(questions[i]);
+        console.log(`Question ${i + 1}: ${parsedQuestion.title.trim()}`);
+        const answer = await new Promise(resolve => rl.question("Enter your answer: ", resolve));
+        studentAnswers.push(answer.trim());
 
-    // Calculate and display the results
-    const results = calculateResults(questions, studentAnswers);
+        if (answer.trim().toLowerCase() === parsedQuestion.response.trim().toLowerCase()) {
+            correctCount++;
+            console.log("Correct answer!");
+        } else {
+            console.log("Wrong answer!");
+        }
+    }
 
     console.log("\n=== Exam Summary ===");
-    console.log(`Correct Answers: ${results.correct}`);
-    console.log(`Incorrect Answers: ${results.incorrect}`);
+    console.log(`Correct answers: ${correctCount}`);
+    console.log(`Wrong answers: ${questions.length - correctCount}`);
 
-    // Display details for each question
     console.log("\n=== Question Details ===");
-    results.details.forEach((detail, index) => {
+    questions.forEach((question, index) => {
+        const parsedQuestion = parseQuestion(question);
         console.log(`\nQuestion ${index + 1}:`);
-        console.log(`   Question: ${detail.question}`);
-        console.log(`   Correct Answer: ${detail.correctAnswer}`);
-        console.log(`   Your Answer: ${detail.studentAnswer}`);
-        console.log(`   ${detail.isCorrect ? 'Correct' : 'Incorrect'}`);
+        console.log(`Question: ${parsedQuestion.title}`);
+        console.log(`Correct answer: ${parsedQuestion.response}`);
+        console.log(`Your answer: ${studentAnswers[index]}`);
+        console.log(studentAnswers[index].trim().toLowerCase() === parsedQuestion.response.trim().toLowerCase() ? "Correct" : "Wrong");
     });
 
     rl.close();
 }
 
-// Start the exam simulation
-simulateExam().catch(err => {
-    console.error("Error:", err);
+/**
+ * Main program entry
+ */
+async function main() {
+    console.log("=== Loading Question Bank ===");
+
+    const folderPath = 'D:GL02_PlanForYou\\SujetB_data'; // GIFT file path
+    const questions = loadQuestions(folderPath); // Load questions
+    if (questions.length === 0) {
+        console.error("No valid questions loaded!");
+        return;
+    }
+
+    console.log(`Successfully loaded ${questions.length} questions.`);
+    console.log("Ready to start the exam? Enter 'y' to begin.");
+
+    const rl = createReadlineInterface();
+    const startExam = await new Promise(resolve => rl.question("", resolve));
+    rl.close();
+
+    if (startExam.toLowerCase() === 'y') {
+        await simulateExam(questions); // Start the exam simulation
+    } else {
+        console.log("Exam cancelled.");
+    }
+}
+
+module.exports = {
+    loadQuestions,
+    parseQuestion,
+    simulateExam,
+};
+
+// Call the main program entry
+main().catch(err => {
+    console.error("An error occurred:", err);
 });
