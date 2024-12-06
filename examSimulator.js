@@ -57,7 +57,7 @@ function createReadlineInterface() {
 }
 
 /**
- * Main function to simulate the exam
+ * Function to simulate the exam
  * @param {Array} questions - Array of already loaded and parsed questions
  */
 async function simulateExam(questions) {
@@ -98,40 +98,8 @@ async function simulateExam(questions) {
     rl.close();
 }
 
-/**
- * Main program entry
- */
-async function main() {
-    console.log("=== Loading Question Bank ===");
-
-    const folderPath = 'D:GL02_PlanForYou\\SujetB_data'; // GIFT file path
-    const questions = loadQuestions(folderPath); // Load questions
-    if (questions.length === 0) {
-        console.error("No valid questions loaded!");
-        return;
-    }
-
-    console.log(`Successfully loaded ${questions.length} questions.`);
-    console.log("Ready to start the exam? Enter 'y' to begin.");
-
-    const rl = createReadlineInterface();
-    const startExam = await new Promise(resolve => rl.question("", resolve));
-    rl.close();
-
-    if (startExam.toLowerCase() === 'y') {
-        await simulateExam(questions); // Start the exam simulation
-    } else {
-        console.log("Exam cancelled.");
-    }
-}
-
 module.exports = {
     loadQuestions,
     parseQuestion,
     simulateExam,
 };
-
-// Call the main program entry
-main().catch(err => {
-    console.error("An error occurred:", err);
-});
