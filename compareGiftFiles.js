@@ -62,7 +62,7 @@ function parseGiftFile(filePath) {
 }
 
 // Main function: Compares two GIFT files
-async function compareGiftFiles(file1, file2) {
+async function compareFiles(file1, file2) {
     try {
         console.log("Comparaison des fichiers...");
 
@@ -114,7 +114,7 @@ async function compareGiftFiles(file1, file2) {
 }
 
 // Example usage
-if (require.main === module) {
+function compareGiftFiles(){
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
@@ -122,10 +122,11 @@ if (require.main === module) {
 
     rl.question('Entrez le chemin du premier fichier GIFT : ', (file1) => {
         rl.question('Entrez le chemin du second fichier GIFT : ', (file2) => {
-            compareGiftFiles(file1, file2).then(() => rl.close());
+            compareFiles(file1, file2).then(() => rl.close());
         });
     });
 }
+
 
 // Export for reuse in other modules
 module.exports = { compareGiftFiles };

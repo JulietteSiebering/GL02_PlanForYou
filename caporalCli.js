@@ -1,12 +1,11 @@
-const fs = require('fs');
-const vCards = require('./vCardsGeneration');
-const { generateGiftExam } = require('./generateGIFT');
-const { handleFileImport } = require('./importGIFT');
-const { examProfil } = require('./examProfil');
+const vCards = require('./generateVCards');
+const { generateGiftExam } = require('./generateGiftExam');
+const { handleFileImport } = require('./importGiftFile');
+const { examProfil } = require('./createExamProfil');
 const { compareGiftFiles } = require('./compareGiftFiles');
-const { exportFile } = require('./exportExamRapport');
-const { simulateExam } = require('./examSimulator');
-const { validateExam } = require('./analyserGIFT');
+const { exportFile } = require('./exportExamProfil');
+const { simulateExam } = require('./simulateExam');
+const { analyseGift } = require('./analyseGiftExam');
 const cli = require("@caporal/core").default;
 
 
@@ -26,17 +25,18 @@ cli
         vCards();
     })
 
-    // SPEC 4: Generate vCards
+    // SPEC 4: Simulate exam test
     .command('simulateExam', 'Simulates Exam entry')
     .action(() => {
         simulateExam();
     })
 
-    // SPEC 5: Analyse GIFT file
-    .command('analyseGift', 'Analyses Gift file')
+    // SPEC 5: Analyze a GIFT file
+    .command('analyzeExam', 'Analyzes a GIFT file')
     .action(() => {
-        validateExam();
+        analyseGift();
     })
+
 
     // SPEC 6: Create an exam profil
     .command('examProfil', 'Examines a gift file and creates a profile')
@@ -66,4 +66,3 @@ cli
 
 
 cli.run(process.argv.slice(2));
-

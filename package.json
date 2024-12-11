@@ -10,7 +10,7 @@
   "name": "gl02_planforyou",
   "version": "1.0.0",
   "description": "",
-  "main": "vCardsGeneration.js",
+  "main": "generateVCards.js",
   "scripts": {
     "test": "jasmine"
   },
