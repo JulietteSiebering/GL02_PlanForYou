@@ -8,7 +8,7 @@ const path = require('path');
 const { createReadlineInterface } = require('./secondaryFunctions');
 const readline = require("readline");
 
-// Liste des types de questions possibles dans le format GIFT
+
 const allQuestionTypes = [
     'Choix multiple',     // Multiple Choice
     'Vrai/Faux',          // True/False
@@ -17,16 +17,13 @@ const allQuestionTypes = [
     'Correspondance',     // Matching
     'Essai',              // Essay
     'Calculée',           // Calculated
-    'Cloze',              // Cloze (Fill-in-the-blank)
-    'Aléatoire'           // Random
 ];
 
-// Vérifie si une question est valide au format GIFT
 function isValidGiftQuestion(line) {
     return line.includes('::') || line.includes('{');
 }
 
-// Détecte le type de question à partir de son contenu
+
 function detectQuestionType(question) {
     if (question.includes('{')) {
         const answers = question.match(/\{(.*?)\}/s);
@@ -103,16 +100,16 @@ function classifyGiftQuestions(filePath) {
                 return acc;
             }, {});
 
-            // Calcul du total des questions
+
             const totalQuestions = questions.length;
 
-            // Calcul des pourcentages
+
             const typePercentages = {};
             for (const [type, count] of Object.entries(typeCounts)) {
                 typePercentages[type] = ((count / totalQuestions) * 100).toFixed(2);  // Calcul du pourcentage
             }
 
-            // Vérification des types manquants
+
             const missingTypes = allQuestionTypes.filter(type => !typeCounts[type]);
 
             resolve({ classifiedQuestions, typeCounts, typePercentages, missingTypes, totalQuestions });
@@ -124,7 +121,7 @@ function classifyGiftQuestions(filePath) {
     });
 }
 
-// Fonction principale pour analyser et afficher l'histogramme des types de questions
+
 function examProfil() {
     const rl = createReadlineInterface();
 
@@ -137,16 +134,13 @@ function examProfil() {
                     console.log(item.question);
                     console.log(`Type : ${item.type}`);
                 });
-
-                // Affichage de l'histogramme des questions par type avec pourcentages
                 console.log("\nHistogramme des questions par type :");
                 for (const [type, count] of Object.entries(typeCounts)) {
+                    const bar = '|'.repeat(count);
                     const percentage = typePercentages[type];
-                    const bar = '|'.repeat(count);  // Crée une barre en fonction du nombre de questions
-                    console.log(`${type}: ${bar} (${percentage}%)`);
+                    console.log(`${bar} ${type} (${percentage}%)`);
                 }
 
-                // Affichage des types manquants
                 if (missingTypes.length > 0) {
                     console.log("\nAlerte : Les types de questions suivants sont manquants dans le fichier GIFT :");
                     missingTypes.forEach((type) => {
@@ -164,7 +158,5 @@ function examProfil() {
             });
     });
 }
-
-// Exporte les fonctions pour réutilisation
 module.exports = { examProfil };
 
