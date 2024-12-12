@@ -2,7 +2,7 @@
 SPEC 9 : Creation d'un fichier text de rapport d'examen
 */
 
-const { createReadlineInterface } = require('./secondaryFunctions');
+const { createReadlineInterface, askQuestion} = require('./secondaryFunctions');
 const fs = require('fs');
 const readline = require('readline');
 const path = require('path');
@@ -131,9 +131,9 @@ function exportFile() {
 
                 rapport += "\nHistogramme des questions par type :\n";
                 for (const [type, count] of Object.entries(typeCounts)) {
+                    const bar = '|'.repeat(count);
                     const percentage = typePercentages[type];
-                    const bar = '|'.repeat(count); // Crée une barre en fonction du nombre de questions
-                    rapport += `${type}: ${bar} (${percentage}%)\n`;
+                    rapport += `${bar}: ${type} (${percentage}%)\n`;
                 }
 
                 if (missingTypes.length > 0) {
@@ -147,24 +147,22 @@ function exportFile() {
 
                 console.log(rapport);
 
-                rl.question('\nVoulez-vous sauvegarder ce rapport dans un fichier texte ? (oui/non) : ', (saveAnswer) => {
+                rl.question('\nVoulez-vous sauvegarder ce rapport dans un fichier texte ? (oui/non) : ', async (saveAnswer) => {
                     if (saveAnswer.toLowerCase() === 'oui') {
-                        rl.question('Entrez le dossier où vous souhaitez sauvegarder le fichier (par défaut : dossier courant) : ', (folderPath) => {
-                            folderPath = folderPath.trim() || '.'; // Utilise le dossier courant si aucun n'est spécifié
-                            rl.question('Entrez le nom du fichier (par défaut : rapport.txt) : ', (fileName) => {
-                                fileName = fileName.trim() || 'rapport.txt'; // Utilise un nom par défaut si aucun n'est spécifié
-                                const outputFilePath = path.join(folderPath, fileName);
+                        const outputFileName = await askQuestion(rl, "Entrez le nom du fichier (sans extension) : ");
+                        const outputDir = await askQuestion(rl, "Entrez le répertoire de sortie : ");
+                        const outputPath = path.join(outputDir, `${outputFileName}.txt`);
 
-                                fs.writeFile(outputFilePath, rapport, 'utf8', (err) => {
-                                    if (err) {
-                                        console.error("Erreur lors de la sauvegarde du fichier :", err.message);
-                                    } else {
-                                        console.log(`Rapport sauvegardé avec succès dans : ${outputFilePath}`);
-                                    }
-                                    rl.close();
-                                });
-                            });
-                        });
+                        // Création du fichier GIFT
+                        try {
+                            if (!fs.existsSync(outputDir)) {
+                                fs.mkdirSync(outputDir, {recursive: true});
+                            }
+                            fs.writeFileSync(outputPath, rapport);
+                            console.log(`Fichier GIFT généré avec succès : ${outputPath}`);
+                        } catch (err) {
+                            console.error("Erreur lors de la création du fichier :", err.message);
+                        }
                     } else {
                         rl.close();
                     }
