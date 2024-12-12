@@ -3,20 +3,23 @@ SPEC 6 : Creation d'un profil statistique d'examen
 */
 
 
+
 const fs = require('fs');
 const path = require('path');
 const { createReadlineInterface } = require('./secondaryFunctions');
 const readline = require("readline");
+const { exec } = require('child_process');
 
 
 const allQuestionTypes = [
-    'Choix multiple',     // Multiple Choice
-    'Vrai/Faux',          // True/False
-    'Réponse courte',     // Short Answer
-    'Réponse numérique',  // Numerical
-    'Correspondance',     // Matching
-    'Essai',              // Essay
-    'Calculée',           // Calculated
+    'Choix multiple',
+    'Vrai/Faux',
+    'Réponse courte',
+    'Réponse numérique',
+    'Correspondance',
+    'Essai',
+    'Calculée',
+    'Cloze'
 ];
 
 function isValidGiftQuestion(line) {
@@ -29,10 +32,14 @@ function detectQuestionType(question) {
         const answers = question.match(/\{(.*?)\}/s);
         if (answers) {
             const answerContent = answers[1];
-            if (answerContent.includes('~') || answerContent.includes('=')) {
+            if (answerContent.includes('1:SA:')) {
+                return 'Cloze';
+            } else if (answerContent.includes('~') || answerContent.includes('=')) {
                 return 'Choix multiple';
             } else if (answerContent.includes('#')) {
                 return 'Réponse numérique';
+            } else if (answerContent.includes('->')) {
+                return 'Correspondance';
             } else {
                 return 'Réponse courte';
             }
@@ -123,8 +130,9 @@ function classifyGiftQuestions(filePath) {
 
 
 function examProfil() {
+    const vega = require('vega');
+    const vl = require('vega-lite');
     const rl = createReadlineInterface();
-
     rl.question('Entrez le chemin du fichier GIFT : ', (filePath) => {
         classifyGiftQuestions(filePath)
             .then(({ classifiedQuestions, typeCounts, typePercentages, missingTypes, totalQuestions }) => {
@@ -134,12 +142,28 @@ function examProfil() {
                     console.log(item.question);
                     console.log(`Type : ${item.type}`);
                 });
-                console.log("\nHistogramme des questions par type :");
-                for (const [type, count] of Object.entries(typeCounts)) {
-                    const bar = '|'.repeat(count);
-                    const percentage = typePercentages[type];
-                    console.log(`${bar} ${type} (${percentage}%)`);
+                let spec = {
+                    $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+                    description: "Histogramme of an GIFT file exam",
+                    data: {
+                        values:[]
+                    },
+                    mark: "bar",
+                    encoding: {
+                        x: { field: "category", type: "nominal" },
+                        y: { field: "value", type: "quantitative" }
+                    }
+                };
+                for (const [category, value] of Object.entries(typeCounts)) {
+                    spec.data.values.push({category, value});
                 }
+                const vegaSpec = vl.compile(spec).spec;
+                const view = new vega.View(vega.parse(vegaSpec), { renderer: 'none' });
+                view.toSVG().then(svg => {
+                    fs.writeFileSync('examHistogramme.svg', svg);
+                    console.log('SVG file created: examHistogramme.svg');
+                });
+                exec('examHistogramme.svg');
 
                 if (missingTypes.length > 0) {
                     console.log("\nAlerte : Les types de questions suivants sont manquants dans le fichier GIFT :");
@@ -158,5 +182,4 @@ function examProfil() {
             });
     });
 }
-module.exports = { examProfil };
-
+module.exports = {examProfil};
