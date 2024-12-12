@@ -6,6 +6,8 @@ const { createReadlineInterface, askQuestion} = require('./secondaryFunctions');
 const fs = require('fs');
 const readline = require('readline');
 const path = require('path');
+const vega = require('vega');
+const vl = require('vega-lite');
 
 const allQuestionTypes = [
     'Choix multiple',     // Multiple Choice
@@ -118,7 +120,18 @@ function classifyGiftQuestions(filePath) {
 
 function exportFile() {
     const rl = createReadlineInterface();
-
+    let spec = {
+        $schema: "https://vega.github.io/schema/vega-lite/v5.json",
+        description: "Histogramme of an GIFT file exam",
+        data: {
+            values:[]
+        },
+        mark: "bar",
+        encoding: {
+            x: { field: "category", type: "nominal" },
+            y: { field: "value", type: "quantitative" }
+        }
+    };
     rl.question('Entrez le chemin du fichier GIFT : ', (filePath) => {
         classifyGiftQuestions(filePath)
             .then(({ classifiedQuestions, typeCounts, typePercentages, missingTypes, totalQuestions }) => {
@@ -130,11 +143,18 @@ function exportFile() {
                 });
 
                 rapport += "\nHistogramme des questions par type :\n";
-                for (const [type, count] of Object.entries(typeCounts)) {
-                    const bar = '|'.repeat(count);
-                    const percentage = typePercentages[type];
-                    rapport += `${bar}: ${type} (${percentage}%)\n`;
+                for (const [category, value] of Object.entries(typeCounts)) {
+                    const bar = '|'.repeat(value);
+                    const percentage = typePercentages[category];
+                    rapport += `${bar}: ${category} (${percentage}%)\n`;
+                    spec.data.values.push({category, value});
                 }
+                const vegaSpec = vl.compile(spec).spec;
+                const view = new vega.View(vega.parse(vegaSpec), { renderer: 'none' });
+                view.toSVG().then(svg => {
+                    fs.writeFileSync('examHistogramme.svg', svg);
+                });
+                rapport += "\nVous pouvez trouvez l'histogramme dessiné dans le fichier examHistogramme.svg\n"
 
                 if (missingTypes.length > 0) {
                     rapport += "\nAlerte : Les types de questions suivants sont manquants dans le fichier GIFT :\n";
@@ -152,14 +172,12 @@ function exportFile() {
                         const outputFileName = await askQuestion(rl, "Entrez le nom du fichier (sans extension) : ");
                         const outputDir = await askQuestion(rl, "Entrez le répertoire de sortie : ");
                         const outputPath = path.join(outputDir, `${outputFileName}.txt`);
-
-                        // Création du fichier GIFT
                         try {
                             if (!fs.existsSync(outputDir)) {
                                 fs.mkdirSync(outputDir, {recursive: true});
                             }
                             fs.writeFileSync(outputPath, rapport);
-                            console.log(`Fichier GIFT généré avec succès : ${outputPath}`);
+                            console.log(`Fichier texte généré avec succès : ${outputPath}`);
                         } catch (err) {
                             console.error("Erreur lors de la création du fichier :", err.message);
                         }
