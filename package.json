@@ -5,7 +5,8 @@
     "gift-pegjs": "^1.0.2",
     "inquirer": "^12.1.0",
     "vcard-generator": "^0.0.7",
-    "vcards-js": "^2.10.0"
+    "vcards-js": "^2.10.0",
+    "vega-util": "^1.17.2"
   },
   "name": "gl02_planforyou",
   "version": "1.0.0",
