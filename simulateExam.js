@@ -2,10 +2,12 @@
 SPEC 4 : imports a GIFT file and simulates an exam
 */
 
+const { isEmpty } = require('vega-lite');
 const { createReadlineInterface } = require('./secondaryFunctions');
 const { removeHtmlTags } = require('./secondaryFunctions');
 const fs = require('fs');
 const readline = require('readline');
+const { table } = require('console');
 
 const titleRegex = /^::(.*?)::/;
 
@@ -46,18 +48,19 @@ function getCorrectAnswer(input) {
         tableau.push(match[1].trim());
     }
 
+
     // si tableau vide, essayer de voir si c'est du vrai-faux
     const regexTF = /\{([^}]*)\}/g;
-    if (tableau === null) {
+    if (isEmpty(tableau)) {
+        input = String(input);
         while ((match = regexTF.exec(input)) !== null) {
-            if ((match == ("T" || "TRUE"))) {
+            if ((match == "{T},T" || match ==  "{TRUE},TRUE")) {
                 tableau.push("true");
-            } else if ((match == ("F" || "FALSE"))) {
+            } else if ((match == "{F},F" || match ==  "{FALSE},FALSE")) {
                 tableau.push("false");
             }
         }
     }
-
     return tableau;
 }
 
@@ -140,15 +143,21 @@ async function simulateExam() {
                 allQuestion.push(answer.question);
                 allTitles.push(answer.title);
                 allCorrectResponses.push(answer.correctResponse);
-                console.log(`\x1b[4mQuestion ${i + 1}:\x1b[0m \x1b[3m${answer.title}\x1b[0m\n${answer.question} ${answer.response}`);
-                if (answer.response[0] == '~') {
-                    console.log(`\x1b[4mPropositions :\x1b[0m ${answer.response}`);
+                console.log(`\x1b[4mQuestion ${i + 1}:\x1b[0m \x1b[3m${answer.title}\x1b[0m\n${answer.question}`);
+                if ((String(answer.response).trim() !== String(answer.correctResponse).replace(/,/g, '').trim()) && (String(answer.correctResponse) !== ("true")) && (String(answer.correctResponse) !== ("false"))) {
+                    console.log(`\x1b[1mPropositions :\x1b[0m ${answer.response}`);
                 }
-                const studentAnswer = await new Promise(resolve => rl.question("Enter your answer: \x1b[0m", resolve));
+                let studentAnswer = await new Promise(resolve => rl.question("Enter your answer: \x1b[0m", resolve));
                 studentAnswers.push(studentAnswer.trim());
 
+                // Pour les vrai-faux
+                if (String(studentAnswer) == "T" || String(studentAnswer) == "TRUE" || String(studentAnswer) == "t" || String(studentAnswer) == "yes" || String(studentAnswer) == "YES" || String(studentAnswer) == "y" || String(studentAnswer) == "Y") {
+                    studentAnswer = "true";
+                } else if (String(studentAnswer) == "F" || String(studentAnswer) == "FALSE" || String(studentAnswer) == "f" || String(studentAnswer) == "no" || String(studentAnswer) == "NO" || String(studentAnswer) == "n" || String(studentAnswer) == "N") {
+                    studentAnswer = "false";
+                }
+
                 if (answer.correctResponse.length > 1) {
-                    console.log("ici");
                     let correctAnswer = false;
 
                     for (let i = 0; i < answer.correctResponse.length; i++) {
