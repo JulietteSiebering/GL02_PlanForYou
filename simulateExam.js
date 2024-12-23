@@ -31,7 +31,6 @@ function getAllResponses(input) {
 
 function getCorrectAnswer(input) {
     let tableau = [];
-
     input = removeHtmlTags(input);
 
     // Vérifier et extraire les correspondances pour "~="
@@ -45,6 +44,18 @@ function getCorrectAnswer(input) {
     const regexEqual = /=\s*([^~}=]+)(?=\s*$|[~}=])/g;
     while ((match = regexEqual.exec(input)) !== null) {
         tableau.push(match[1].trim());
+    }
+
+    // si tableau vide, essayer de voir si c'est du vrai-faux
+    const regexTF = /\{([^}]*)\}/g;
+    if (tableau === null) {
+        while ((match = regexTF.exec(input)) !== null) {
+            if ((match == ("T" || "TRUE"))) {
+                tableau.push("true");
+            } else if ((match == ("F" || "FALSE"))) {
+                tableau.push("false");
+            }
+        }
     }
 
     return tableau;
@@ -112,6 +123,7 @@ async function simulateExam() {
         console.log('\n' + '\x1b[34m========== Exam Simulation Start ==========\x1b[0m');
         let i = 0;
         const studentAnswers = [];
+        let consigneCount = 0;
         let correctCount = 0;
         let unknowknCount = 0;
         for (const question of allQuestions) {
@@ -122,6 +134,7 @@ async function simulateExam() {
                 consigne = removeHtmlTags(consigne);
                 console.log('\n' + '\x1b[33m===== Instruction =====\x1b[0m');
                 console.log(consigne + '\n');
+                consigneCount++;
             } else {
                 allResponses.push(answer.response);
                 allQuestion.push(answer.question);
@@ -133,25 +146,45 @@ async function simulateExam() {
                 }
                 const studentAnswer = await new Promise(resolve => rl.question("Enter your answer: \x1b[0m", resolve));
                 studentAnswers.push(studentAnswer.trim());
-                if (studentAnswer == answer.correctResponse) {
-                    correctCount++;
-                    console.log("\x1b[32mCorrect answer!\x1b[0m \n\n");
-                } else if (answer.correctResponse == "unknown") {
-                    unknowknCount++;
-                    console.log("\x1b[90mThe answer needs to be corrected by the teacher!\x1b[0m \n\n");
+
+                if (answer.correctResponse.length > 1) {
+                    console.log("ici");
+                    let correctAnswer = false;
+
+                    for (let i = 0; i < answer.correctResponse.length; i++) {
+                        if (studentAnswer == answer.correctResponse[i]) {
+                            correctAnswer = true;
+                        }
+                    }
+                    if (correctAnswer) {
+                        correctCount++;
+                        console.log("\x1b[32mCorrect answer!\x1b[0m \n\n");
+                    } else {
+                        console.log(`\x1b[31mWrong answer!\x1b[0m The Correct answer was : \x1b[1m${answer.correctResponse}\x1b[0m\n\n`);
+                    }
+
                 } else {
-                    console.log(`\x1b[31mWrong answer!\x1b[0m The Correct answer was : \x1b[1m${answer.correctResponse}\x1b[0m\n\n`);
+                    if (studentAnswer == answer.correctResponse) {
+                        correctCount++;
+                        console.log("\x1b[32mCorrect answer!\x1b[0m \n\n");
+                    } else if (answer.correctResponse == "unknown") {
+                        unknowknCount++;
+                        console.log("\x1b[90mThe answer needs to be corrected by the teacher!\x1b[0m \n\n");
+                    } else {
+                        console.log(`\x1b[31mWrong answer!\x1b[0m The Correct answer was : \x1b[1m${answer.correctResponse}\x1b[0m\n\n`);
+                    }
                 }
+
                 i++;
             }
         }
         console.log("\n\n");
         console.log("========== Exam Simulation Resume ==========");
-        console.log(`Total number of questions : ${allQuestions.length}`);
+        console.log(`Total number of questions : ${allQuestions.length - consigneCount}`);
         console.log(`Correct answers : ${correctCount}`);
-        console.log(`Wrong answers : ${allQuestions.length - correctCount}`);
+        console.log(`Wrong answers : ${allQuestions.length - correctCount - consigneCount}`);
         console.log(`Answers to be verified by a teacher : ${unknowknCount}`);
-        console.log(`Your score is at least : ${correctCount / allQuestions.length * 20} / 20`);
+        console.log(`Your score is at least : ${correctCount / (allQuestions.length - consigneCount) * 20} / 20`);
 
 
         rl.close();
