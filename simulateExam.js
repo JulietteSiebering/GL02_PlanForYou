@@ -7,6 +7,14 @@ const { removeHtmlTags } = require('./secondaryFunctions');
 const fs = require('fs');
 const readline = require('readline');
 
+const titleRegex = /^::(.*?)::/;
+
+function removeCommentLines(input) {
+    const lines = input.split('\n');
+    const filteredLines = lines.filter(line => !line.trim().startsWith('//'));
+    return filteredLines.join('\n');
+}
+
 function getAllResponses(input) {
     // Utilise une expression régulière pour capturer tout ce qui est entre {}
     const matches = input.match(/\{([^}]*)\}/g);
@@ -22,33 +30,38 @@ function getAllResponses(input) {
 }
 
 function getCorrectAnswer(input) {
-    const matches = input.match(/~=(.*?)(~|$|})/g);
-    const matches2 = input.match(/=(.*?)(~|$|})/g);
-    if (matches) {
-        return matches.join('');
-    } else if (matches2) {
-        return matches2.join('');
-    } else {
-        return '';
+    let tableau = [];
+
+    input = removeHtmlTags(input);
+
+    // Vérifier et extraire les correspondances pour "~="
+    const regexTildeEqual = /~=\s*([^~}=]+)(?=\s*$|[~}=])/g;
+    let match;
+    while ((match = regexTildeEqual.exec(input)) !== null) {
+        tableau.push(match[1].trim());
     }
+
+    // Vérifier et extraire les correspondances pour "="
+    const regexEqual = /=\s*([^~}=]+)(?=\s*$|[~}=])/g;
+    while ((match = regexEqual.exec(input)) !== null) {
+        tableau.push(match[1].trim());
+    }
+
+    return tableau;
 }
 
-function loadQuestionsFromOneFile(filePath){
+function loadQuestionsFromOneFile(filePath) {
     let allQuestions = [];
     const content = fs.readFileSync(filePath, 'utf-8');
-    const questions = content.split(/\n\n+/); // Sépare les questions
-    allQuestions = allQuestions.concat(questions.filter(q => q.startsWith('::'))); // Filtre et ajoute les questions valides
+    const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\uFEFF|\u200B/g, ''); // Normaliser les sauts de ligne et nettoyer les caractères invisibles
+    let questions = removeCommentLines(normalizedContent);
+    questions = questions.split(/\n\n+/); // Sépare les questions
+    const cleanedQuestions = questions.map(q => q.trim());
+    allQuestions = allQuestions.concat(cleanedQuestions.filter(q => q.startsWith('::'))); // Filtre et ajoute les questions valides
     return allQuestions;
 }
 
 function parseQuestion(question) {
-    function removeCommentLines(input) {
-        const lines = input.split('\n');
-        const filteredLines = lines.filter(line => !line.trim().startsWith('//'));
-        return filteredLines.join('\n');
-    }
-    question = removeCommentLines(question);
-    const titleRegex = /^::(.*?)::/;
     const match = question.match(titleRegex);
     if (!match) {
         return {
@@ -57,23 +70,28 @@ function parseQuestion(question) {
             correctResponse: "unknown"
         };
     }
-    const title = match[1].trim();
-    const response = question.replace(titleRegex, '').trim();
+
+    var title = match[1].trim();
     const cleanedTitle = removeHtmlTags(title);
-    let allResponses = getAllResponses(response);
-    allResponses = removeHtmlTags(allResponses);
+    let response;
+    let allResponses;
+
+    response = question.replace(titleRegex, '').trim();
+    allResponses = removeHtmlTags(response);
+    allResponses = getAllResponses(allResponses);
     allResponses = allResponses.replace(/.*\{([^}]*)\}.*/g, "$1");
+    allResponses = allResponses.replace(/~/g, "").replace(/=/g, "");
+
     let correct = getCorrectAnswer(response);
-    correct = correct.replace(/~/g, "");
-    correct = correct.replace(/=/g, "");
-    correct = correct.replace(/}/g, "");
-    if (correct == ''){
+    correct = correct.map(item => item.replace(/~/g, "").replace(/=/g, ""));
+    if (correct == '') {
         correct = "unknown";
     }
-    allResponses = allResponses.replace(/=/g, "");
-    question = question.replace(/::.*?::/g, "");
-    question = question.replace(/{.*?}/g, "...");
+
     question = removeHtmlTags(question);
+    question = question.replace(/::.*?::/g, "");
+    question = question.replace(/\{([^}]*)\}/g, "...");
+
     return {
         title: cleanedTitle.trim() + ' ',
         response: allResponses,
@@ -91,33 +109,41 @@ async function simulateExam() {
         let allQuestion = [];
         let allTitles = [];
         let allCorrectResponses = [];
-        console.log("========== Exam Simulation Start ==========");
+        console.log('\n' + '\x1b[34m========== Exam Simulation Start ==========\x1b[0m');
         let i = 0;
         const studentAnswers = [];
         let correctCount = 0;
         let unknowknCount = 0;
         for (const question of allQuestions) {
             const answer = parseQuestion(question);
-            allResponses.push(answer.response);
-            allQuestion.push(answer.question);
-            allTitles.push(answer.title);
-            allCorrectResponses.push(answer.correctResponse);
-            console.log(`Question ${i + 1}: ${answer.title}, ${answer.question}`);
-            if (answer.response[0] == '~'){
-                console.log(`Propositions : ${answer.response}`);
-            }
-            const studentAnswer = await new Promise(resolve => rl.question("Enter your answer: ", resolve));
-            studentAnswers.push(studentAnswer.trim());
-            if (studentAnswer == answer.correctResponse) {
-                correctCount++;
-                console.log("Correct answer! \n\n");
-            } else if (answer.correctResponse == "unknown") {
-                unknowknCount++;
-                console.log("The answer needs to be corrected by the teacher! \n\n");
+            if (question.includes('.0')) {
+                let consigne = question.replace(titleRegex, '').trim();
+                consigne = consigne.replace(/.*\{([^}]*)\}.*/g, "$1");
+                consigne = removeHtmlTags(consigne);
+                console.log('\n' + '\x1b[33m===== Instruction =====\x1b[0m');
+                console.log(consigne + '\n');
             } else {
-                console.log(`Wrong answer! The Correct answer was : ${answer.correctResponse}\n\n`);
+                allResponses.push(answer.response);
+                allQuestion.push(answer.question);
+                allTitles.push(answer.title);
+                allCorrectResponses.push(answer.correctResponse);
+                console.log(`\x1b[4mQuestion ${i + 1}:\x1b[0m \x1b[3m${answer.title}\x1b[0m\n${answer.question} ${answer.response}`);
+                if (answer.response[0] == '~') {
+                    console.log(`\x1b[4mPropositions :\x1b[0m ${answer.response}`);
+                }
+                const studentAnswer = await new Promise(resolve => rl.question("Enter your answer: \x1b[0m", resolve));
+                studentAnswers.push(studentAnswer.trim());
+                if (studentAnswer == answer.correctResponse) {
+                    correctCount++;
+                    console.log("\x1b[32mCorrect answer!\x1b[0m \n\n");
+                } else if (answer.correctResponse == "unknown") {
+                    unknowknCount++;
+                    console.log("\x1b[90mThe answer needs to be corrected by the teacher!\x1b[0m \n\n");
+                } else {
+                    console.log(`\x1b[31mWrong answer!\x1b[0m The Correct answer was : \x1b[1m${answer.correctResponse}\x1b[0m\n\n`);
+                }
+                i++;
             }
-            i++;
         }
         console.log("\n\n");
         console.log("========== Exam Simulation Resume ==========");
@@ -125,11 +151,11 @@ async function simulateExam() {
         console.log(`Correct answers : ${correctCount}`);
         console.log(`Wrong answers : ${allQuestions.length - correctCount}`);
         console.log(`Answers to be verified by a teacher : ${unknowknCount}`);
-        console.log(`Your score is at least : ${correctCount/allQuestions.length * 20} / 20`);
+        console.log(`Your score is at least : ${correctCount / allQuestions.length * 20} / 20`);
 
 
         rl.close();
     });
 }
 
-module.exports = {simulateExam};
+module.exports = { simulateExam };
