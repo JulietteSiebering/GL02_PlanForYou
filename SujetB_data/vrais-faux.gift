@@ -1,0 +1,7 @@
+// Question : 0 Nom : Proposition vraie
+::Proposition vraie à propos de Grant::Grant a été enterré dans une tombe à New-York.{T}
+::Proposition vraie à propos de Grant::Grant a été enterré dans une tombe à New-York.{TRUE}
+
+// Question : 0 Nom : Proposition fausse
+::Proposition fausse à propos du soleil::Le soleil se lève à l'Ouest.{FALSE}
+::Proposition fausse à propos du soleil::Le soleil se lève à l'Ouest.{F}
