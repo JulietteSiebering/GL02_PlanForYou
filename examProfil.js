@@ -5,18 +5,17 @@ SPEC 6 : Creation d'un profil statistique d'examen
 const fs = require('fs');
 const readline = require('readline');
 const path = require('path');
+const { removeHtmlTags } = require('./secondaryFunctions');
 
 // Liste des types de questions possibles dans le format GIFT
 const allQuestionTypes = [
     'Choix multiple',     // Multiple Choice
-    'Vrai/Faux',          // True/False
+    'Vrai-faux',          // True/False
     'Réponse courte',     // Short Answer
     'Réponse numérique',  // Numerical
-    'Correspondance',     // Matching
-    'Essai',              // Essay
-    'Calculée',           // Calculated
-    'Cloze',              // Cloze (Fill-in-the-blank)
-    'Aléatoire'           // Random
+    'Appariement',        // Matching
+    'Composition',        // Essay
+    'Mot manquant',       // Cloze (Fill-in-the-blank)
 ];
 
 // Vérifie si une question est valide au format GIFT
@@ -24,18 +23,40 @@ function isValidGiftQuestion(line) {
     return line.includes('::') || line.includes('{');
 }
 
+// Trouve toutes les réponses d'une question
+function getAllResponses(input) {
+    // Utilise une expression régulière pour capturer tout ce qui est entre {}
+    const matches = input.match(/\{([^}]*)\}/g);
+    // Si des correspondances sont trouvées, on les rejoint en une seule chaîne
+    if (matches) {
+        return matches.join(''); // Joindre tous les éléments capturés entre les accolades
+    } else {
+        return ''; // Retourner une chaîne vide si aucune correspondance n'est trouvée
+    }
+}
+
 // Détecte le type de question à partir de son contenu
 function detectQuestionType(question) {
     if (question.includes('{')) {
-        const answers = question.match(/\{(.*?)\}/s);
-        if (answers) {
-            const answerContent = answers[1];
-            if (answerContent.includes('~') || answerContent.includes('=')) {
-                return 'Choix multiple';
-            } else if (answerContent.includes('#')) {
+        let allResponses = removeHtmlTags(question);
+        allResponses = getAllResponses(allResponses);
+        if (allResponses) {
+            if (allResponses.includes('#')) {
                 return 'Réponse numérique';
-            } else {
+            } else if (allResponses.includes('->')) {
+                return 'Appariement'
+            } else if (allResponses.includes('~')) {
+                if (question.match(/}\s*(\S+)/)){
+                    return 'Mot manquant';
+                }else {
+                    return 'Choix multiple';
+                }
+            } else if (allResponses.includes('=')) {
                 return 'Réponse courte';
+            } else if (allResponses.includes('T' || 'F' || 'TRUE' || 'FALSE')) {
+                return 'Vrai-faux';
+            } else {
+                return 'Composition';
             }
         }
     }
