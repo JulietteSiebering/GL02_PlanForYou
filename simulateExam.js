@@ -20,12 +20,9 @@ function removeCommentLines(input) {
 function getAllResponses(input) {
     // Utilise une expression régulière pour capturer tout ce qui est entre {}
     const matches = input.match(/\{([^}]*)\}/g);
-    const matches2 = input.match(/<b>.*?<\/b>/g);
     // Si des correspondances sont trouvées, on les rejoint en une seule chaîne
-    if (matches2) {
-        return matches2.join(''); // Joindre tous les éléments capturés entre les accolades
-    } else if (matches) {
-        return matches.join('');
+    if (matches) {
+        return matches.join(''); // Joindre tous les éléments capturés entre les accolades
     } else {
         return ''; // Retourner une chaîne vide si aucune correspondance n'est trouvée
     }
@@ -64,6 +61,33 @@ function getCorrectAnswer(input) {
     return tableau;
 }
 
+function detectQuestionType(question) {
+    if (question.includes('{')) {
+        let allResponses = removeHtmlTags(question);
+        allResponses = getAllResponses(allResponses);
+        if (allResponses) {
+            if (allResponses.includes('#')) {
+                return 'Réponse numérique';
+            } else if (allResponses.includes('->')) {
+                return 'Appariement'
+            } else if (allResponses.includes('~')) {
+                if (question.match(/}\s*(\S+)/)){
+                    return 'Mot manquant';
+                }else {
+                    return 'Choix multiple';
+                }
+            } else if (allResponses.includes('=')) {
+                return 'Réponse courte';
+            } else if (allResponses.includes('T' || 'F' || 'TRUE' || 'FALSE')) {
+                return 'Vrai-faux';
+            } else {
+                return 'Composition';
+            }
+        }
+    }
+    return 'Inconnu';
+}
+
 function loadQuestionsFromOneFile(filePath) {
     let allQuestions = [];
     const content = fs.readFileSync(filePath, 'utf-8');
@@ -93,9 +117,8 @@ function parseQuestion(question) {
     response = question.replace(titleRegex, '').trim();
     allResponses = removeHtmlTags(response);
     allResponses = getAllResponses(allResponses);
-    allResponses = allResponses.replace(/.*\{([^}]*)\}.*/g, "$1");
-    allResponses = allResponses.replace(/~/g, "").replace(/=/g, "");
-
+    allResponses = allResponses.replace(/.*\{([^}]*)\}.*/g, "$1").replace(/~/g, "").replace(/=/g, "");
+    
     let correct = getCorrectAnswer(response);
     correct = correct.map(item => item.replace(/~/g, "").replace(/=/g, ""));
     if (correct == '') {
@@ -144,7 +167,7 @@ async function simulateExam() {
                 allTitles.push(answer.title);
                 allCorrectResponses.push(answer.correctResponse);
                 console.log(`\x1b[4mQuestion ${i + 1}:\x1b[0m \x1b[3m${answer.title}\x1b[0m\n${answer.question}`);
-                if ((String(answer.response).trim() !== String(answer.correctResponse).replace(/,/g, '').trim()) && (String(answer.correctResponse) !== ("true")) && (String(answer.correctResponse) !== ("false"))) {
+                if ((detectQuestionType(question) === 'Choix multiple')) {
                     console.log(`\x1b[1mPropositions :\x1b[0m ${answer.response}`);
                 }
                 let studentAnswer = await new Promise(resolve => rl.question("Enter your answer: \x1b[0m", resolve));
@@ -168,6 +191,9 @@ async function simulateExam() {
                     if (correctAnswer) {
                         correctCount++;
                         console.log("\x1b[32mCorrect answer!\x1b[0m \n\n");
+                    } else if (answer.correctResponse == "unknown") {
+                        unknowknCount++;
+                        console.log("\x1b[90mThe answer needs to be corrected by the teacher!\x1b[0m \n\n");
                     } else {
                         console.log(`\x1b[31mWrong answer!\x1b[0m The Correct answer was : \x1b[1m${answer.correctResponse}\x1b[0m\n\n`);
                     }
@@ -191,7 +217,7 @@ async function simulateExam() {
         console.log("========== Exam Simulation Resume ==========");
         console.log(`Total number of questions : ${allQuestions.length - consigneCount}`);
         console.log(`Correct answers : ${correctCount}`);
-        console.log(`Wrong answers : ${allQuestions.length - correctCount - consigneCount}`);
+        console.log(`Wrong answers : ${allQuestions.length - correctCount - consigneCount - unknowknCount}`);
         console.log(`Answers to be verified by a teacher : ${unknowknCount}`);
         console.log(`Your score is at least : ${correctCount / (allQuestions.length - consigneCount) * 20} / 20`);
 
