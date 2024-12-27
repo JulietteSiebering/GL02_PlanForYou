@@ -46,15 +46,15 @@ function detectQuestionType(question) {
             } else if (allResponses.includes('->')) {
                 return 'Appariement'
             } else if (allResponses.includes('~')) {
-                if (question.match(/}\s*(\S+)/)){
+                if (question.match(/}\s*(\S+)/)) {
                     return 'Mot manquant';
-                }else {
+                } else {
                     return 'Choix multiple';
                 }
+            } else if (allResponses.includes('T') || allResponses.includes('F') || allResponses.includes('TRUE') || allResponses.includes('FALSE')) {
+                return 'Vrai-faux';
             } else if (allResponses.includes('=')) {
                 return 'Réponse courte';
-            } else if (allResponses.includes('T' || 'F' || 'TRUE' || 'FALSE')) {
-                return 'Vrai-faux';
             } else {
                 return 'Composition';
             }
