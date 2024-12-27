@@ -61,6 +61,7 @@ function getCorrectAnswer(input) {
     return tableau;
 }
 
+// Détecte le type de question à partir de son contenu
 function detectQuestionType(question) {
     if (question.includes('{')) {
         let allResponses = removeHtmlTags(question);
@@ -71,15 +72,15 @@ function detectQuestionType(question) {
             } else if (allResponses.includes('->')) {
                 return 'Appariement'
             } else if (allResponses.includes('~')) {
-                if (question.match(/}\s*(\S+)/)){
+                if (question.match(/}\s*(\S+)/)) {
                     return 'Mot manquant';
-                }else {
+                } else {
                     return 'Choix multiple';
                 }
+            } else if (allResponses.includes('T') || allResponses.includes('F') || allResponses.includes('TRUE') || allResponses.includes('FALSE')) {
+                return 'Vrai-faux';
             } else if (allResponses.includes('=')) {
                 return 'Réponse courte';
-            } else if (allResponses.includes('T' || 'F' || 'TRUE' || 'FALSE')) {
-                return 'Vrai-faux';
             } else {
                 return 'Composition';
             }
@@ -117,9 +118,8 @@ function parseQuestion(question) {
     response = question.replace(titleRegex, '').trim();
     allResponses = removeHtmlTags(response);
     allResponses = getAllResponses(allResponses);
-    allResponses = allResponses.replace(/.*\{([^}]*)\}.*/g, "$1").replace(/~/g, "").replace(/=/g, "");
     
-    let correct = getCorrectAnswer(response);
+    let correct = getCorrectAnswer(allResponses);
     correct = correct.map(item => item.replace(/~/g, "").replace(/=/g, ""));
     if (correct == '') {
         correct = "unknown";
@@ -128,6 +128,8 @@ function parseQuestion(question) {
     question = removeHtmlTags(question);
     question = question.replace(/::.*?::/g, "");
     question = question.replace(/\{([^}]*)\}/g, "...");
+
+    allResponses = allResponses.replace(/.*\{([^}]*)\}.*/g, "$1").replace(/~/g, "").replace(/=/g, "");
 
     return {
         title: cleanedTitle.trim() + ' ',
