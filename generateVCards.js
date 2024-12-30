@@ -3,7 +3,7 @@ SPEC 3 : Génération de fichier VCards
 */
 const { createReadlineInterface } = require('./secondaryFunctions');
 const vCardsJS = require('vcards-js');
-const { validateEmail, validatePhone } = require('./ValidateVCards');
+const { validateName,validateEmail, validatePhone } = require('./ValidateVCards');
 
 module.exports = function vCardsGeneration() {
 
@@ -28,14 +28,14 @@ module.exports = function vCardsGeneration() {
         // Collect user inputs with validation 
         const firstName = await askUntilValid(
             "Prénom : ",
-            (input) => input.trim().length > 0,
-            "Erreur : Le prénom est obligatoire. Veuillez réessayer !"
+            (input) => input.trim().length > 0 && validateName(input),
+            "Erreur : Le prénom ne doit contenir que des lettres. Veuillez réessayer !"
         );
 
         const lastName = await askUntilValid(
             "Nom : ",
-            (input) => input.trim().length > 0,
-            "Erreur : Le nom est obligatoire. Veuillez réessayer !"
+            (input) => input.trim().length > 0 && validateName(input),
+            "Erreur : Le nom ne doit contenire que des lettres. Veuillez réessayer !"
         );
 
         const email = await askUntilValid(
