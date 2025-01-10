@@ -55,15 +55,24 @@ A directory "test" with 2 files "test.gift" and "test2.gift" are provided with t
 
 ### Version :
 
-#### 1.0
+#### 1.5
 
 - Needs Spec developpement
 
-### Liste des contributeurs
+
+Git d'origine : https://github.com/Klim200/GL02_PlanForYou
+
+### Liste des contributeurs originaux 
 Camille Guth (camille.guth@utt.fr)
 
 Xinyu Hu (xinyu.hu@utt.fr)
 
 Klimentiy Mirek (klimentiy.mirek@utt.fr)
 
+### Liste des contributeurs repreneurs 
 
+Iris Gagniere (iris.gagniere@utt.fr)
+
+Juliette Siebering (juliette.siebering@utt.fr)
+
+Paul Fernandez (paul.fernandez@utt.fr)

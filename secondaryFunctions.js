@@ -61,10 +61,26 @@ function createReadlineInterface() {
 function askQuestion(rl, query) {
     return new Promise(resolve => rl.question(query, resolve));
 }
+const askYesNo = async (rl, question) => {
+    let answer;
+    do {
+        answer = await askQuestion(rl, question); // Attend la réponse
+        if (!answer.trim()) {
+            // Si l'utilisateur appuie sur Entrée sans rien écrire
+            return false; // Retourne "non" par défaut
+        }
+        if (typeof answer === 'string') {
+            answer = answer.trim().toLowerCase(); // Nettoie la réponse
+        } else {
+            answer = ""; // Réinitialise si la réponse n'est pas une chaîne
+        }
+    } while (!/^(o|oui|n|non)$/.test(answer)); // Continue tant que la réponse n'est pas valide
+    return answer.startsWith('o'); // Retourne true pour "oui", false pour "non"
+};
 
 function removeHtmlTags(text) {
     return text.replace(/<[^>]*>/g, '')  // Retirer les balises HTML
         .replace(/\[html\]/g, ''); // Retirer le texte [html]
 }
 
-module.exports = { removeHtmlTags, parseQuestion, loadQuestions, askQuestion, createReadlineInterface };
+module.exports = { removeHtmlTags, parseQuestion, loadQuestions, askQuestion, askYesNo, createReadlineInterface };
