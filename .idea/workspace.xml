@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="a7f1f049-6dda-4e0e-8e04-de4c4ef559de" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="JavaScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/../GL02_Projet_Copy/compareGiftFiles.js" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../GL02_Projet_Copy/examProfil.js" root0="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/node_modules/vega-embed/build/vega-embed.js" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
+  <component name="ProjectId" id="2ptVr4RyVc9uuPFhQ5JqVnp0JDC" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "HTTP Request.generated-requests | #1.executor": "Run",
+    "Node.js.analyserGIFT.js.executor": "Run",
+    "Node.js.caporalCli.js.executor": "Run",
+    "Node.js.compareGiftFiles.js.executor": "Run",
+    "Node.js.createExamProfil.js.executor": "Run",
+    "Node.js.test.js.executor": "Run",
+    "Node.js.testVega.js.executor": "Run",
+    "Node.js.vCardsGeneration.js.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "ts.external.directory.path": "C:\\Program Files\\JetBrains\\WebStorm 2024.3\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration name="generated-requests | #1" type="HttpClient.HttpRequestRunConfigurationType" factoryName="HTTP Request" temporary="true" nameIsGenerated="true" path="$APPLICATION_CONFIG_DIR$/scratches/generated-requests.http" executionIdentifier="#1" runType="Run single request">
+      <method v="2" />
+    </configuration>
+    <configuration name="testVega.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/testVega.js" working-dir="$PROJECT_DIR$">
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Node.js.testVega.js" />
+        <item itemvalue="HTTP Request.generated-requests | #1" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-e768b9ed790e-JavaScript-WS-243.21565.180" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="a7f1f049-6dda-4e0e-8e04-de4c4ef559de" name="Changes" comment="" />
+      <created>1733585554696</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1733585554696</updated>
+      <workItem from="1733585557145" duration="28000" />
+      <workItem from="1733585596974" duration="17206000" />
+      <workItem from="1733733553454" duration="4955000" />
+      <workItem from="1733739122875" duration="134000" />
+      <workItem from="1733739292233" duration="1654000" />
+      <workItem from="1733743919301" duration="2737000" />
+      <workItem from="1733748467394" duration="165000" />
+      <workItem from="1733748654556" duration="261000" />
+      <workItem from="1733757299457" duration="18607000" />
+      <workItem from="1733823738186" duration="3598000" />
+      <workItem from="1733902673369" duration="442000" />
+      <workItem from="1733903154121" duration="11914000" />
+      <workItem from="1733960106956" duration="922000" />
+      <workItem from="1733996639942" duration="241000" />
+      <workItem from="1733998035220" duration="1590000" />
+      <workItem from="1734018966288" duration="1258000" />
+      <workItem from="1734020378285" duration="635000" />
+      <workItem from="1734021075882" duration="321000" />
+      <workItem from="1734021524820" duration="99000" />
+      <workItem from="1734021753056" duration="2664000" />
+      <workItem from="1734024683040" duration="1102000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>
