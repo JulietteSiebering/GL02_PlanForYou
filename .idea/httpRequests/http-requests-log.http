@@ -1,0 +1,27 @@
+GET https://vega.github.io/schema/vega-lite/v5.json
+User-Agent: IntelliJ HTTP Client/WebStorm 2024.3
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+<> 2024-12-12T001725.200.json
+
+###
+
+GET https://vega.github.io/schema/vega-lite/v5.json
+User-Agent: IntelliJ HTTP Client/WebStorm 2024.3
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+<> 2024-12-12T001401.200.json
+
+###
+
+GET https://vega.github.io/schema/vega-lite/v5.json
+User-Agent: IntelliJ HTTP Client/WebStorm 2024.3
+Accept-Encoding: br, deflate, gzip, x-gzip
+Accept: */*
+
+<> 2024-12-12T001356.200.json
+
+###
+
