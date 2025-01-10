@@ -39,7 +39,6 @@ function parseGiftQuestions(filePath) {
         rl.on('line', (line) => {
             const trimmedLine = line.trim();
 
-            // Si la ligne est vide, fin d'une question
             if (!trimmedLine) {
                 if (currentQuestion) {
                     questions.push(currentQuestion.trim());
