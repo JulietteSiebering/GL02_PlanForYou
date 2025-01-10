@@ -187,9 +187,9 @@ async function simulateExam() {
                         let studentAnswer = await new Promise(resolve => rl.question("Enter your answer: ", resolve));
                         studentAnswers.push(studentAnswer.trim());
                         // Pour les vrai-faux
-                        if (String(studentAnswer) == "T" || String(studentAnswer) == "TRUE" || String(studentAnswer) == "t" || String(studentAnswer) == "yes" || String(studentAnswer) == "YES" || String(studentAnswer) == "y" || String(studentAnswer) == "Y") {
+                        if (String(studentAnswer) == "T" || String(studentAnswer) == "TRUE" || String(studentAnswer) == "t" || String(studentAnswer) == "yes" || String(studentAnswer) == "YES" || String(studentAnswer) == "y" || String(studentAnswer) == "Y" || String(studentAnswer) == "V" || String(studentAnswer) == "VRAI" || String(studentAnswer) == "v" || String(studentAnswer) == "vrai" || String(studentAnswer) == "O" || String(studentAnswer) == "OUI" || String(studentAnswer) == "o" || String(studentAnswer) == "oui") {
                             studentAnswer = "true";
-                        } else if (String(studentAnswer) == "F" || String(studentAnswer) == "FALSE" || String(studentAnswer) == "f" || String(studentAnswer) == "no" || String(studentAnswer) == "NO" || String(studentAnswer) == "n" || String(studentAnswer) == "N") {
+                        } else if (String(studentAnswer) == "F" || String(studentAnswer) == "FALSE" || String(studentAnswer) == "f" || String(studentAnswer) == "no" || String(studentAnswer) == "NO" || String(studentAnswer) == "n" || String(studentAnswer) == "N" || String(studentAnswer) == "FAUX" || String(studentAnswer) == "faux" || String(studentAnswer) == "N" || String(studentAnswer) == "NON" || String(studentAnswer) == "n" || String(studentAnswer) == "non" || String(studentAnswer) == "nah bro") {
                             studentAnswer = "false";
                         }
 
