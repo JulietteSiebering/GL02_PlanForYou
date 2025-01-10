@@ -37,6 +37,7 @@ cli
         analyseGift();
     })
 
+
     // SPEC 6: Create an exam profil
     .command('examProfil', 'Examines a gift file and creates a profile')
     .action(() => {
