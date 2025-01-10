@@ -32,28 +32,21 @@ function getCorrectAnswer(input) {
     let tableau = [];
     input = removeHtmlTags(input);
 
-    // Vérifier et extraire les correspondances pour "~="
-    const regexTildeEqual = /~=\s*([^~}=]+)(?=\s*$|[~}=])/g;
-    let match;
-    while ((match = regexTildeEqual.exec(input)) !== null) {
-        tableau.push(match[1].trim());
-    }
-
     // Vérifier et extraire les correspondances pour "="
     const regexEqual = /=\s*([^~}=]+)(?=\s*$|[~}=])/g;
-    while ((match = regexEqual.exec(input)) !== null) {
+    let match;
+    while (((match = regexEqual.exec(input)) !== null)) {
         tableau.push(match[1].trim());
     }
-
 
     // si tableau vide, essayer de voir si c'est du vrai-faux
     const regexTF = /\{([^}]*)\}/g;
     if (isEmpty(tableau)) {
         input = String(input);
         while ((match = regexTF.exec(input)) !== null) {
-            if ((match == "{T},T" || match ==  "{TRUE},TRUE")) {
+            if ((match == "{T},T" || match == "{TRUE},TRUE")) {
                 tableau.push("true");
-            } else if ((match == "{F},F" || match ==  "{FALSE},FALSE")) {
+            } else if ((match == "{F},F" || match == "{FALSE},FALSE")) {
                 tableau.push("false");
             }
         }
@@ -101,6 +94,8 @@ function loadQuestionsFromOneFile(filePath) {
 }
 
 function parseQuestion(question) {
+    
+    
     const match = question.match(titleRegex);
     if (!match) {
         return {
@@ -109,35 +104,34 @@ function parseQuestion(question) {
             correctResponse: "unknown"
         };
     }
-
-    var title = match[1].trim();
+    const title = match[1].trim();
     const cleanedTitle = removeHtmlTags(title);
-    let response;
-    let allResponses;
-
-    response = question.replace(titleRegex, '').trim();
-    allResponses = removeHtmlTags(response);
+    let response = question.replace(titleRegex, '').trim();
+    let allResponses = removeHtmlTags(response);
     allResponses = getAllResponses(allResponses);
-    
-    let correct = getCorrectAnswer(allResponses);
-    correct = correct.map(item => item.replace(/~/g, "").replace(/=/g, ""));
-    if (correct == '') {
-        correct = "unknown";
-    }
 
+    allResponses = allResponses.replace(/.*\{([^}]*)\}.*/g, "$1");
+    allResponses = allResponses.replace(/~/g, " ~ ");
+    allResponses = allResponses.replace(/=/g, "");
+    
+    let correctAnswers = getCorrectAnswer(response);
+    let nbGoodAns = correctAnswers.length;
+    if (isEmpty(correctAnswers)) {
+        correctAnswers = "unknown";
+    }
     question = removeHtmlTags(question);
     question = question.replace(/::.*?::/g, "");
     question = question.replace(/\{([^}]*)\}/g, "...");
-
-    allResponses = allResponses.replace(/.*\{([^}]*)\}.*/g, "$1").replace(/~/g, "").replace(/=/g, "");
-
+    
     return {
         title: cleanedTitle.trim() + ' ',
         response: allResponses,
-        correctResponse: correct,
-        question: question
+        correctResponse: correctAnswers,
+        question: question,
+        nbCorrectAnswer: nbGoodAns
     };
 }
+
 
 async function simulateExam() {
 
@@ -148,7 +142,7 @@ async function simulateExam() {
         let allQuestion = [];
         let allTitles = [];
         let allCorrectResponses = [];
-        console.log('\n' + '\x1b[34m========== Exam Simulation Start ==========\x1b[0m');
+        console.log("\x1b[34m========== Exam Simulation Start ========== \x1b[0m");
         let i = 0;
         const studentAnswers = [];
         let consigneCount = 0;
@@ -168,60 +162,89 @@ async function simulateExam() {
                 allQuestion.push(answer.question);
                 allTitles.push(answer.title);
                 allCorrectResponses.push(answer.correctResponse);
-                console.log(`\x1b[4mQuestion ${i + 1}:\x1b[0m \x1b[3m${answer.title}\x1b[0m\n${answer.question}`);
-                if ((detectQuestionType(question) === 'Choix multiple')) {
-                    console.log(`\x1b[1mPropositions :\x1b[0m ${answer.response}`);
+                console.log(`\x1b[4mQuestion ${i + 1}: \x1b[0m\x1b[3m${answer.title}\x1b[0m \n${answer.question}`);
+
+                let processed = false;
+
+                if (answer.nbCorrectAnswer === 1) {
+                    if (answer.response[1] === '~') {
+                        console.log(`\x1b[1mPropositions :\x1b[0m ${answer.response}`);
+
+                        const studentAnswer = await new Promise(resolve => rl.question("Enter your answer: ", resolve));
+                        studentAnswers.push(studentAnswer.trim());
+
+                        if (studentAnswer === answer.correctResponse[0]) {
+                            correctCount++;
+                            console.log("\x1b[32mCorrect answer! \x1b[0m \n\n");
+                        } else {
+                            console.log(`\x1b[31mWrong answer! \x1b[0m The Correct answer was : ${answer.correctResponse} \x1b[0m \n\n`);
+                        }
+
+                        processed = true; // Indiquer que cette section a été traitée
+                    }
+
+                    else {
+                        let studentAnswer = await new Promise(resolve => rl.question("Enter your answer: ", resolve));
+                        studentAnswers.push(studentAnswer.trim());
+                        // Pour les vrai-faux
+                        if (String(studentAnswer) == "T" || String(studentAnswer) == "TRUE" || String(studentAnswer) == "t" || String(studentAnswer) == "yes" || String(studentAnswer) == "YES" || String(studentAnswer) == "y" || String(studentAnswer) == "Y") {
+                            studentAnswer = "true";
+                        } else if (String(studentAnswer) == "F" || String(studentAnswer) == "FALSE" || String(studentAnswer) == "f" || String(studentAnswer) == "no" || String(studentAnswer) == "NO" || String(studentAnswer) == "n" || String(studentAnswer) == "N") {
+                            studentAnswer = "false";
+                        }
+
+                        if (studentAnswer === answer.correctResponse[0]) {
+                            correctCount++;  // Si la réponse de l'étudiant correspond à une des réponses correctes
+                            console.log("\x1b[32mCorrect answer! \x1b[0m \n\n");
+                        } else {
+                            console.log("\x1b[31mWrong answer. \x1b[0m ");
+                            console.log(`Here is what you should have written : \x1b[1m${answer.correctResponse} \x1b[0m`);
+                        }
+
+                        processed = true;
+                        check = true
+                    }
                 }
-                let studentAnswer = await new Promise(resolve => rl.question("Enter your answer: \x1b[0m", resolve));
-                studentAnswers.push(studentAnswer.trim());
 
-                // Pour les vrai-faux
-                if (String(studentAnswer) == "T" || String(studentAnswer) == "TRUE" || String(studentAnswer) == "t" || String(studentAnswer) == "yes" || String(studentAnswer) == "YES" || String(studentAnswer) == "y" || String(studentAnswer) == "Y") {
-                    studentAnswer = "true";
-                } else if (String(studentAnswer) == "F" || String(studentAnswer) == "FALSE" || String(studentAnswer) == "f" || String(studentAnswer) == "no" || String(studentAnswer) == "NO" || String(studentAnswer) == "n" || String(studentAnswer) == "N") {
-                    studentAnswer = "false";
-                }
+                if (answer.nbCorrectAnswer > 1) {
+                    const studentAnswer = await new Promise(resolve => rl.question("Enter your answer: ", resolve));
+                    studentAnswers.push(studentAnswer.trim());
 
-                if (answer.correctResponse.length > 1) {
-                    let correctAnswer = false;
-
-                    for (let i = 0; i < answer.correctResponse.length; i++) {
-                        if (studentAnswer == answer.correctResponse[i]) {
-                            correctAnswer = true;
+                    let check = false;
+                    for (let i = 0; i < answer.nbCorrectAnswer; i++) {
+                        if (studentAnswer === answer.correctResponse[i]) { // Si la réponse de l'étudiant correspond à une des réponses correctes
+                            correctCount++;
+                            console.log("\x1b[32mCorrect answer! \x1b[0m \n\n");
+                            check = true;
                         }
                     }
-                    if (correctAnswer) {
-                        correctCount++;
-                        console.log("\x1b[32mCorrect answer!\x1b[0m \n\n");
-                    } else if (answer.correctResponse == "unknown") {
-                        unknowknCount++;
-                        console.log("\x1b[90mThe answer needs to be corrected by the teacher!\x1b[0m \n\n");
-                    } else {
-                        console.log(`\x1b[31mWrong answer!\x1b[0m The Correct answer was : \x1b[1m${answer.correctResponse}\x1b[0m\n\n`);
-                    }
-
-                } else {
-                    if (studentAnswer == answer.correctResponse) {
-                        correctCount++;
-                        console.log("\x1b[32mCorrect answer!\x1b[0m \n\n");
-                    } else if (answer.correctResponse == "unknown") {
-                        unknowknCount++;
-                        console.log("\x1b[90mThe answer needs to be corrected by the teacher!\x1b[0m \n\n");
-                    } else {
-                        console.log(`\x1b[31mWrong answer!\x1b[0m The Correct answer was : \x1b[1m${answer.correctResponse}\x1b[0m\n\n`);
+                    if (!check) {
+                        console.log("\x1b[31mWrong answer! \x1b[0m ");
+                        console.log("Here are the answers that would have been correct : ")
+                        for (let i = 0; i < answer.nbCorrectAnswer; i++) {
+                            console.log(`\x1b[1m- ${answer.correctResponse[i]}\x1b[0m`);
+                        }
                     }
                 }
 
+                else if (answer.correctResponse === "unknown") {
+                    const studentAnswer = await new Promise(resolve => rl.question("Enter your answer (this type of questions can't be automaticaly corrected) : ", resolve));
+                    studentAnswers.push(studentAnswer.trim());
+                    unknowknCount++;
+                    console.log("\x1b[90mThe answer needs to be corrected by the teacher. \x1b[0m \n\n");
+                }
                 i++;
             }
         }
         console.log("\n\n");
-        console.log("========== Exam Simulation Resume ==========");
+        console.log("\x1b[34m========== Exam Simulation Resume ==========\x1b[0m");
         console.log(`Total number of questions : ${allQuestions.length - consigneCount}`);
         console.log(`Correct answers : ${correctCount}`);
         console.log(`Wrong answers : ${allQuestions.length - correctCount - consigneCount - unknowknCount}`);
         console.log(`Answers to be verified by a teacher : ${unknowknCount}`);
-        console.log(`Your score is at least : ${correctCount / (allQuestions.length - consigneCount) * 20} / 20`);
+        let scoreMin = correctCount / allQuestions.length * 20;
+        let scoreMax = (correctCount + unknowknCount) / allQuestions.length * 20;
+        console.log(`Your score is between : ${scoreMin.toFixed(2)} / 20 (${correctCount} / ${allQuestions.length}) and ${scoreMax.toFixed(2)} / 20 (${correctCount + unknowknCount} / ${allQuestions.length})`);
 
 
         rl.close();
