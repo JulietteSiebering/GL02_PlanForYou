@@ -1,4 +1,4 @@
-const { validateEmail, validatePhone } = require('../ValidateVCards');
+const { validateEmail, validatePhone } = require('../vCardsValidation'); 
 
 describe('vCardsGeneration', () => {
 

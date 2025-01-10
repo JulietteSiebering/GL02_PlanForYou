@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 //const { promisify } = require('util');
-const { loadQuestions, parseQuestion, removeHtmlTags } = require('../generateGiftExam');
+const { loadQuestions, parseQuestion, removeHtmlTags } = require('../generateGIFT'); 
 
 describe("Exam Generator Tests", () => {
     // Mock des fichiers pour les tests
