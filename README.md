@@ -55,7 +55,7 @@ A directory "test" with 2 files "test.gift" and "test2.gift" are provided with t
 
 ### Version :
 
-#### 1.0
+#### 1.5
 
 - Needs Spec developpement
 
