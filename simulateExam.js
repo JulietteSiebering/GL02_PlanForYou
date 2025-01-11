@@ -162,22 +162,22 @@ async function simulateExam() {
                 allQuestion.push(answer.question);
                 allTitles.push(answer.title);
                 allCorrectResponses.push(answer.correctResponse);
-                console.log(`\x1b[4mQuestion ${i + 1}: \x1b[0m\x1b[3m${answer.title}\x1b[0m \n${answer.question}`);
+                console.log(`\x1b[4mQuestion ${i + 1}:\x1b[0m \x1b[3m${answer.title}\x1b[0m \n${answer.question}`);
 
                 let processed = false;
 
                 if (answer.nbCorrectAnswer === 1) {
                     if (answer.response[1] === '~') {
-                        console.log(`\x1b[1mPropositions :\x1b[0m ${answer.response}`);
+                        console.log(`\x1b[1mPropositions :\x1b[0m${answer.response}`);
 
                         const studentAnswer = await new Promise(resolve => rl.question("Enter your answer: ", resolve));
                         studentAnswers.push(studentAnswer.trim());
 
                         if (studentAnswer === answer.correctResponse[0]) {
                             correctCount++;
-                            console.log("\x1b[32mCorrect answer! \x1b[0m \n\n");
+                            console.log("\x1b[32mCorrect answer ! \x1b[0m \n\n");
                         } else {
-                            console.log(`\x1b[31mWrong answer! \x1b[0m The Correct answer was : ${answer.correctResponse} \x1b[0m \n\n`);
+                            console.log(`\x1b[31mWrong answer ! \x1b[0mThe Correct answer was : ${answer.correctResponse} \x1b[0m \n\n`);
                         }
 
                         processed = true; // Indiquer que cette section a été traitée
@@ -198,7 +198,7 @@ async function simulateExam() {
                             console.log("\x1b[32mCorrect answer! \x1b[0m \n\n");
                         } else {
                             console.log("\x1b[31mWrong answer. \x1b[0m ");
-                            console.log(`Here is what you should have written : \x1b[1m${answer.correctResponse} \x1b[0m`);
+                            console.log(`Here is what you should have written : \x1b[1m${answer.correctResponse} \x1b[0m \n\n`);
                         }
 
                         processed = true;
@@ -214,7 +214,7 @@ async function simulateExam() {
                     for (let i = 0; i < answer.nbCorrectAnswer; i++) {
                         if (studentAnswer === answer.correctResponse[i]) { // Si la réponse de l'étudiant correspond à une des réponses correctes
                             correctCount++;
-                            console.log("\x1b[32mCorrect answer! \x1b[0m \n\n");
+                            console.log("\x1b[32mCorrect answer ! \x1b[0m \n\n");
                             check = true;
                         }
                     }
@@ -224,11 +224,12 @@ async function simulateExam() {
                         for (let i = 0; i < answer.nbCorrectAnswer; i++) {
                             console.log(`\x1b[1m- ${answer.correctResponse[i]}\x1b[0m`);
                         }
+                        console.log("\n\n")
                     }
                 }
 
                 else if (answer.correctResponse === "unknown") {
-                    const studentAnswer = await new Promise(resolve => rl.question("Enter your answer (this type of questions can't be automaticaly corrected) : ", resolve));
+                    const studentAnswer = await new Promise(resolve => rl.question("Enter your answer (\x1b[3mthis type of questions can't be automaticaly corrected\x1b[0) : ", resolve));
                     studentAnswers.push(studentAnswer.trim());
                     unknowknCount++;
                     console.log("\x1b[90mThe answer needs to be corrected by the teacher. \x1b[0m \n\n");
@@ -239,9 +240,9 @@ async function simulateExam() {
         console.log("\n\n");
         console.log("\x1b[34m========== Exam Simulation Resume ==========\x1b[0m");
         console.log(`Total number of questions : ${allQuestions.length - consigneCount}`);
-        console.log(`Correct answers : ${correctCount}`);
-        console.log(`Wrong answers : ${allQuestions.length - correctCount - consigneCount - unknowknCount}`);
-        console.log(`Answers to be verified by a teacher : ${unknowknCount}`);
+        console.log(`\x1b[32mCorrect answers : ${correctCount}`);
+        console.log(`\x1b[31mWrong answers : ${allQuestions.length - correctCount - consigneCount - unknowknCount}`);
+        console.log(`\x1b[33mAnswers to be verified by a teacher : ${unknowknCount}\x1b[0m`);
         let scoreMin = correctCount / allQuestions.length * 20;
         let scoreMax = (correctCount + unknowknCount) / allQuestions.length * 20;
         console.log(`Your score is between : ${scoreMin.toFixed(2)} / 20 (${correctCount} / ${allQuestions.length}) and ${scoreMax.toFixed(2)} / 20 (${correctCount + unknowknCount} / ${allQuestions.length})`);
